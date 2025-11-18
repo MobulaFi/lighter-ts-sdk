@@ -1,0 +1,29 @@
+{
+  "name": "lighter-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for Lighter API",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "ts-node -r dotenv/config main.ts",
+    "key": "ts-node -r dotenv/config examples/scripts/generate-api-key.ts",
+    "order": "ts-node -r dotenv/config examples/scripts/create-order.ts",
+    "info": "ts-node -r dotenv/config examples/scripts/get-info.ts",
+    "auth-token": "ts-node -r dotenv/config examples/scripts/auth-token.ts",
+    "get-auth-token": "ts-node -r dotenv/config examples/scripts/get-auth-token.ts",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.0.0",
+    "ethers": "^6.0.0",
+    "koffi": "^2.14.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
