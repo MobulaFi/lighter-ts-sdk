@@ -5,7 +5,7 @@ TypeScript SDK for interacting with the Lighter (zkLighter) API. This SDK provid
 ## Installation
 
 ```bash
-npm install lighter-sdk
+npm install zklighter-sdk
 ```
 
 ## Requirements
@@ -24,7 +24,7 @@ npm install lighter-sdk
 ### Basic Configuration
 
 ```typescript
-import { Configuration, AccountApi } from "lighter-sdk"
+import { Configuration, AccountApi } from "zklighter-sdk"
 
 const configuration = new Configuration({
   basePath: "https://mainnet.zklighter.elliot.ai", // or testnet URL
@@ -36,7 +36,7 @@ const accountApi = new AccountApi(configuration)
 ### Get Account Information
 
 ```typescript
-import { AccountApi, Configuration } from "lighter-sdk"
+import { AccountApi, Configuration } from "zklighter-sdk"
 
 const configuration = new Configuration({
   basePath: "https://mainnet.zklighter.elliot.ai",
@@ -61,7 +61,7 @@ import {
   Configuration,
   OrderApi,
   TransactionApi,
-} from "lighter-sdk"
+} from "zklighter-sdk"
 
 const BASE_URL = "https://mainnet.zklighter.elliot.ai"
 const API_KEY_PRIVATE_KEY = "your-api-key-private-key"
@@ -177,7 +177,7 @@ The `SignerClient` is a high-level client that handles transaction signing and s
 ### Initialization
 
 ```typescript
-import { SignerClient } from "lighter-sdk"
+import { SignerClient } from "zklighter-sdk"
 
 const client = new SignerClient(
   baseUrl, // API base URL
@@ -350,7 +350,7 @@ const [tx, err] = await client.update_leverage(
 const [tx, err] = await client.change_api_key(ethPrivateKey, newApiPublicKey)
 
 // Create new API key
-import { create_api_key } from "lighter-sdk"
+import { create_api_key } from "zklighter-sdk"
 
 const [privateKey, publicKey, err] = create_api_key("")
 if (err) {
@@ -505,7 +505,7 @@ import {
   TransactionApi,
   SignerClient,
   // ... other exports
-} from "lighter-sdk"
+} from "zklighter-sdk"
 ```
 
 ## Native Libraries

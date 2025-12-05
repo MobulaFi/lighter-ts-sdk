@@ -1,7 +1,7 @@
 {
-  "name": "lighter-sdk",
+  "name": "zklighter-sdk",
   "version": "1.0.0",
-  "description": "TypeScript SDK for Lighter API",
+  "description": "TypeScript SDK for interacting with the Lighter (zkLighter) API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -20,11 +20,29 @@
     "account": "ts-node -r dotenv/config examples/scripts/check-account.ts",
     "positions": "ts-node -r dotenv/config examples/scripts/positions-interaction.ts",
     "build": "tsc && cp -r src/signers dist/signers",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
+  "keywords": [
+    "lighter",
+    "zklighter",
+    "sdk",
+    "typescript",
+    "trading",
+    "defi",
+    "api",
+    "ethereum"
+  ],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MobulaFi/lighter-ts-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MobulaFi/lighter-ts-sdk/issues"
+  },
+  "homepage": "https://github.com/MobulaFi/lighter-ts-sdk#readme",
   "dependencies": {
     "axios": "^1.6.0",
     "dotenv": "^16.0.0",
