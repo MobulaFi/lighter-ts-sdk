@@ -2,7 +2,7 @@ import axios from "axios"
 import { Wallet } from "ethers"
 import { AccountApi, Configuration, InfoApi, TransactionApi } from "../../src"
 import { SignerClient } from "../../src/signer"
-import { MAINNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL } from "./constants"
 import { AxiosError } from "axios"
 
 const BASE_URL = MAINNET_BASE_URL

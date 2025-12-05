@@ -1,5 +1,5 @@
 import { AccountApi, Configuration } from "../../src"
-import { MAINNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL } from "./constants"
 
 async function getAccountIndex(ethAddress: string): Promise<number | null> {
   const configuration = new Configuration({

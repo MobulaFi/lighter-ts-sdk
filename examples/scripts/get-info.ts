@@ -15,7 +15,7 @@ import {
   FundingsResolutionEnum,
   PublicPoolsFilterEnum,
 } from "../../src"
-import { MAINNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL } from "./constants"
 
 const L1_ADDRESS = "0x0435b1aE398D3FD9035142d529B20dd0Cf722eD7"
 const ACCOUNT_INDEX = 410044

@@ -2,7 +2,13 @@
   "name": "lighter-sdk",
   "version": "1.0.0",
   "description": "TypeScript SDK for Lighter API",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
     "test": "ts-node -r dotenv/config main.ts",
     "key": "ts-node -r dotenv/config examples/scripts/generate-api-key.ts",
@@ -13,7 +19,8 @@
     "fast-withdraw": "ts-node -r dotenv/config examples/scripts/fast-withdraw.ts",
     "account": "ts-node -r dotenv/config examples/scripts/check-account.ts",
     "positions": "ts-node -r dotenv/config examples/scripts/positions-interaction.ts",
-    "build": "tsc"
+    "build": "tsc && cp -r src/signers dist/signers",
+    "prepare": "npm run build"
   },
   "keywords": [],
   "author": "",

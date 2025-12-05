@@ -1,6 +1,6 @@
 import { SignerClient } from "../../src/signer"
 import { Configuration, OrderApi, AccountApi } from "../../src"
-import { MAINNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL } from "./constants"
 
 const BASE_URL = MAINNET_BASE_URL
 const API_KEY_PRIVATE_KEY = process.env.API_KEY_PRIVATE_KEY

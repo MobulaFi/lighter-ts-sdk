@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import { SignerClient } from "../../src/signer"
-import { MAINNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL } from "./constants"
 
 interface AccountInfo {
   account_index: number

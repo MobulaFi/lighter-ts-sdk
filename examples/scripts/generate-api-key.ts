@@ -1,7 +1,7 @@
 import { AccountApi, Configuration } from "../../src"
 import { Wallet } from "ethers"
 import { SignerClient, create_api_key } from "../../src/signer"
-import { MAINNET_BASE_URL, TESTNET_BASE_URL } from "../../constants"
+import { MAINNET_BASE_URL, TESTNET_BASE_URL } from "./constants"
 
 // This script creates and registers a new API key for the given account and prints the API key and private key
 
