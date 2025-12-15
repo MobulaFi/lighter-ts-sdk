@@ -18,6 +18,7 @@ function getKoffi() {
 let ApiKeyResponseStruct: any = null
 let StrOrErrStruct: any = null
 let CreateOrderTxReqStruct: any = null
+let SignedTxResponseStruct: any = null
 
 function initializeStructs() {
   if (ApiKeyResponseStruct) return // Already initialized
@@ -31,6 +32,14 @@ function initializeStructs() {
 
   StrOrErrStruct = k.struct("StrOrErr", {
     str: "char*",
+    err: "char*",
+  })
+
+  SignedTxResponseStruct = k.struct("SignedTxResponse", {
+    txType: "uint8",
+    txInfo: "char*",
+    txHash: "char*",
+    messageToSign: "char*",
     err: "char*",
   })
 
@@ -206,6 +215,89 @@ function extractStrOrErr(result: any): {
   }
 }
 
+function decodeTxInfo(result: any): {
+  txType: number | null
+  txInfo: string | null
+  txHash: string | null
+  err: string | null
+} {
+  if (!result) {
+    return {
+      txType: null,
+      txInfo: null,
+      txHash: null,
+      err: "Null result returned",
+    }
+  }
+  if (result.err) {
+    const error = result.err || null
+    return { txType: null, txInfo: null, txHash: null, err: error }
+  }
+  return {
+    txType: result.txType !== undefined ? result.txType : null,
+    txInfo: result.txInfo || null,
+    txHash: result.txHash || null,
+    err: null,
+  }
+}
+
+function decodeAndSignTxInfo(
+  ethPrivateKey: string,
+  result: any
+): Promise<{
+  txType: number | null
+  txInfo: string | null
+  txHash: string | null
+  err: string | null
+}> {
+  return new Promise(async (resolve) => {
+    if (!result) {
+      resolve({
+        txType: null,
+        txInfo: null,
+        txHash: null,
+        err: "Null result returned",
+      })
+      return
+    }
+    if (result.err) {
+      const error = result.err || null
+      resolve({ txType: null, txInfo: null, txHash: null, err: error })
+      return
+    }
+
+    const txType = result.txType !== undefined ? result.txType : null
+    const txInfoStr = result.txInfo || null
+    const txHashStr = result.txHash || null
+    const msgToSign = result.messageToSign || null
+
+    if (!txInfoStr || !msgToSign) {
+      resolve({
+        txType,
+        txInfo: null,
+        txHash: txHashStr,
+        err: "Missing txInfo or messageToSign",
+      })
+      return
+    }
+
+    // Sign the message
+    const wallet = new ethers.Wallet(ethPrivateKey)
+    const signature = await wallet.signMessage(msgToSign)
+
+    // Add signature to tx_info
+    const txInfo = JSON.parse(txInfoStr)
+    txInfo.L1Sig = signature
+
+    resolve({
+      txType,
+      txInfo: JSON.stringify(txInfo),
+      txHash: txHashStr,
+      err: null,
+    })
+  })
+}
+
 let cachedLibrary: any = null
 let cachedFunctions: any = null
 let cachedLibraryPath: string | null = null
@@ -222,7 +314,6 @@ let cachedLibraryPath: string | null = null
  *   - GenerateAPIKey: Generates a new API key pair
  *   - CreateClient: Creates a client instance for signing operations
  *   - CheckClient: Validates client configuration
- *   - SwitchAPIKey: Switches the active API key for signing
  *   - SignChangePubKey: Signs a change public key transaction
  *   - SignCreateOrder: Signs an order creation transaction
  *   - SignCreateGroupedOrders: Signs multiple grouped orders
@@ -277,11 +368,20 @@ export function initialize_signer(): any {
   let libraryPath: string
 
   if (isArm && isMac) {
-    libraryPath = path.join(pathToSignerFolders, "signer-arm64.dylib")
+    libraryPath = path.join(
+      pathToSignerFolders,
+      "lighter-signer-darwin-arm64.dylib"
+    )
   } else if (isLinux && isX64) {
-    libraryPath = path.join(pathToSignerFolders, "signer-amd64.so")
+    libraryPath = path.join(
+      pathToSignerFolders,
+      "lighter-signer-linux-amd64.so"
+    )
   } else if (isWindows && isX64) {
-    libraryPath = path.join(pathToSignerFolders, "signer-amd64.dll")
+    libraryPath = path.join(
+      pathToSignerFolders,
+      "lighter-signer-windows-amd64.dll"
+    )
   } else {
     throw new Error(
       `Unsupported platform/architecture: ${platform}/${arch}. ` +
@@ -315,90 +415,141 @@ export function initialize_signer(): any {
         "int64",
       ]),
       CheckClient: cachedLibrary.func("CheckClient", "str", ["int", "int64"]),
-      SwitchAPIKey: cachedLibrary.func("SwitchAPIKey", "str", ["int"]),
-      SignChangePubKey: cachedLibrary.func("SignChangePubKey", StrOrErrStruct, [
-        "str",
-        "int64",
-      ]),
-      SignCreateOrder: cachedLibrary.func("SignCreateOrder", StrOrErrStruct, [
-        "int", // market_index
-        "int64", // client_order_index
-        "int64", // base_amount
-        "int", // price
-        "int", // is_ask
-        "int", // order_type
-        "int", // time_in_force
-        "int", // reduce_only
-        "int", // trigger_price
-        "int64", // order_expiry
-        "int64", // nonce
-      ]),
+      SignChangePubKey: cachedLibrary.func(
+        "SignChangePubKey",
+        SignedTxResponseStruct,
+        [
+          "str", // new_pubkey
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
+      SignCreateOrder: cachedLibrary.func(
+        "SignCreateOrder",
+        SignedTxResponseStruct,
+        [
+          "int", // market_index
+          "int64", // client_order_index
+          "int64", // base_amount
+          "int", // price
+          "int", // is_ask
+          "int", // order_type
+          "int", // time_in_force
+          "int", // reduce_only
+          "int", // trigger_price
+          "int64", // order_expiry
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
       SignCreateGroupedOrders: cachedLibrary.func(
         "SignCreateGroupedOrders",
-        StrOrErrStruct,
-        ["uint8", k.pointer("void"), "int", "int64"]
+        SignedTxResponseStruct,
+        ["uint8", k.pointer("void"), "int", "int64", "int", "int64"] // grouping_type, orders_ptr, orders_len, nonce, api_key_index, account_index
       ),
-      SignCancelOrder: cachedLibrary.func("SignCancelOrder", StrOrErrStruct, [
-        "int",
-        "int64",
-        "int64",
-      ]),
-      SignWithdraw: cachedLibrary.func("SignWithdraw", StrOrErrStruct, [
-        "int64",
-        "int64",
+      SignCancelOrder: cachedLibrary.func(
+        "SignCancelOrder",
+        SignedTxResponseStruct,
+        [
+          "int", // market_index
+          "int64", // order_index
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
+      SignWithdraw: cachedLibrary.func("SignWithdraw", SignedTxResponseStruct, [
+        "int", // asset_index
+        "int", // route_type
+        "int64", // amount
+        "int64", // nonce
+        "int", // api_key_index
+        "int64", // account_index
       ]),
       SignCreateSubAccount: cachedLibrary.func(
         "SignCreateSubAccount",
-        StrOrErrStruct,
-        ["int64"]
+        SignedTxResponseStruct,
+        ["int64", "int", "int64"] // nonce, api_key_index, account_index
       ),
       SignCancelAllOrders: cachedLibrary.func(
         "SignCancelAllOrders",
-        StrOrErrStruct,
-        ["int", "int64", "int64"]
+        SignedTxResponseStruct,
+        ["int", "int64", "int64", "int", "int64"] // time_in_force, timestamp_ms, nonce, api_key_index, account_index
       ),
-      SignModifyOrder: cachedLibrary.func("SignModifyOrder", StrOrErrStruct, [
-        "int",
-        "int64",
-        "int64",
-        "int64",
-        "int64",
-        "int64",
-      ]),
-      SignTransfer: cachedLibrary.func("SignTransfer", StrOrErrStruct, [
-        "int64",
-        "int64",
-        "int64",
-        "str",
-        "int64",
+      SignModifyOrder: cachedLibrary.func(
+        "SignModifyOrder",
+        SignedTxResponseStruct,
+        [
+          "int", // market_index
+          "int64", // order_index
+          "int64", // base_amount
+          "int64", // price
+          "int64", // trigger_price
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
+      SignTransfer: cachedLibrary.func("SignTransfer", SignedTxResponseStruct, [
+        "int64", // to_account_index
+        "int16", // asset_id
+        "int8", // route_from
+        "int8", // route_to
+        "int64", // usdc_amount
+        "int64", // fee
+        "str", // memo
+        "int64", // nonce
+        "int", // api_key_index
+        "int64", // account_index
       ]),
       SignCreatePublicPool: cachedLibrary.func(
         "SignCreatePublicPool",
-        StrOrErrStruct,
-        ["int64", "int64", "int64", "int64"]
+        SignedTxResponseStruct,
+        ["int64", "int", "int64", "int64", "int", "int64"] // operator_fee, initial_total_shares, min_operator_share_rate, nonce, api_key_index, account_index
       ),
       SignUpdatePublicPool: cachedLibrary.func(
         "SignUpdatePublicPool",
-        StrOrErrStruct,
-        ["int64", "int", "int64", "int64", "int64"]
+        SignedTxResponseStruct,
+        ["int64", "int", "int64", "int", "int64", "int", "int64"] // public_pool_index, status, operator_fee, min_operator_share_rate, nonce, api_key_index, account_index
       ),
-      SignMintShares: cachedLibrary.func("SignMintShares", StrOrErrStruct, [
-        "int64",
-        "int64",
-        "int64",
-      ]),
-      SignBurnShares: cachedLibrary.func("SignBurnShares", StrOrErrStruct, [
-        "int64",
-        "int64",
-        "int64",
-      ]),
+      SignMintShares: cachedLibrary.func(
+        "SignMintShares",
+        SignedTxResponseStruct,
+        [
+          "int64", // public_pool_index
+          "int64", // share_amount
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
+      SignBurnShares: cachedLibrary.func(
+        "SignBurnShares",
+        SignedTxResponseStruct,
+        [
+          "int64", // public_pool_index
+          "int64", // share_amount
+          "int64", // nonce
+          "int", // api_key_index
+          "int64", // account_index
+        ]
+      ),
       SignUpdateLeverage: cachedLibrary.func(
         "SignUpdateLeverage",
-        StrOrErrStruct,
-        ["int", "int", "int", "int64"]
+        SignedTxResponseStruct,
+        ["int", "int", "int", "int64", "int", "int64"] // market_index, fraction, margin_mode, nonce, api_key_index, account_index
+      ),
+      SignUpdateMargin: cachedLibrary.func(
+        "SignUpdateMargin",
+        SignedTxResponseStruct,
+        ["int", "int64", "int", "int64", "int", "int64"] // market_index, usdc_amount, direction, nonce, api_key_index, account_index
       ),
       CreateAuthToken: cachedLibrary.func("CreateAuthToken", StrOrErrStruct, [
-        "int64",
+        "int64", // deadline
+        "int", // api_key_index
+        "int64", // account_index
       ]),
     }
 
@@ -450,6 +601,7 @@ export interface SignerClientOptions {
 
 export class SignerClient {
   static readonly USDC_TICKER_SCALE = 1e6
+  static readonly ETH_TICKER_SCALE = 1e8
 
   static readonly TX_TYPE_CHANGE_PUB_KEY = 8
   static readonly TX_TYPE_CREATE_SUB_ACCOUNT = 9
@@ -490,6 +642,15 @@ export class SignerClient {
 
   static readonly CROSS_MARGIN_MODE = 0
   static readonly ISOLATED_MARGIN_MODE = 1
+
+  static readonly ISOLATED_MARGIN_REMOVE_COLLATERAL = 0
+  static readonly ISOLATED_MARGIN_ADD_COLLATERAL = 1
+
+  static readonly ROUTE_PERP = 0
+  static readonly ROUTE_SPOT = 1
+
+  static readonly ASSET_ID_USDC = 3
+  static readonly ASSET_ID_ETH = 1
 
   static readonly GROUPING_TYPE_ONE_TRIGGERS_THE_OTHER = 1
   static readonly GROUPING_TYPE_ONE_CANCELS_THE_OTHER = 2
@@ -644,8 +805,10 @@ export class SignerClient {
   }
 
   switch_api_key(api_key: number): string | null {
-    const result = this.signer.SwitchAPIKey(api_key)
-    return result || null
+    // Note: SwitchAPIKey is no longer exported in the new binary
+    // All functions now take api_key_index directly, so switching is handled via parameters
+    // This method is kept for compatibility but does nothing
+    return null
   }
 
   create_api_key(
@@ -668,35 +831,34 @@ export class SignerClient {
   async sign_change_api_key(
     eth_private_key: string,
     new_pubkey: string,
-    nonce: number
-  ): Promise<[string | null, string | null]> {
-    const result = this.signer.SignChangePubKey(new_pubkey, nonce)
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): Promise<[number | null, string | null, string | null, string | null]> {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignChangePubKey(
+      new_pubkey,
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
     if (!result) {
-      return [null, "Failed to sign change API key: null result returned"]
+      return [
+        null,
+        null,
+        null,
+        "Failed to sign change API key: null result returned",
+      ]
     }
 
-    const { str: txInfoStr, err: error } = extractStrOrErr(result)
+    const decoded = await decodeAndSignTxInfo(eth_private_key, result)
 
-    if (error) {
-      return [null, error]
+    if (decoded.err) {
+      return [null, null, null, decoded.err]
     }
 
-    if (!txInfoStr) {
-      return [null, "No transaction info returned"]
-    }
-
-    // Fetch message to sign
-    const txInfo = JSON.parse(txInfoStr)
-    const msgToSign = txInfo.MessageToSign
-    delete txInfo.MessageToSign
-
-    // Sign the message (ethers.js handles the Ethereum message prefix automatically)
-    const wallet = new ethers.Wallet(eth_private_key)
-    const signature = await wallet.signMessage(msgToSign)
-    txInfo.L1Sig = signature
-
-    return [JSON.stringify(txInfo), null]
+    return [decoded.txType, decoded.txInfo, decoded.txHash, null]
   }
 
   get_api_key_nonce(api_key_index: number, nonce: number): [number, number] {
@@ -724,8 +886,11 @@ export class SignerClient {
     reduce_only: boolean,
     trigger_price: number,
     order_expiry: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignCreateOrder(
       market_index,
       client_order_index,
@@ -737,18 +902,21 @@ export class SignerClient {
       reduce_only ? 1 : 0,
       trigger_price,
       order_expiry,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_create_grouped_orders(
     grouping_type: number,
     orders: any[],
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
     // With koffi, we need to manually pack struct data into a buffer
     // CreateOrderTxReq struct layout: uint8, int64, int64, uint32, uint8, uint8, uint8, uint8, uint32, int64
     // Total size: 1 + 8 + 8 + 4 + 1 + 1 + 1 + 1 + 4 + 8 = 37 bytes (with padding, likely 40 or 48)
@@ -787,54 +955,97 @@ export class SignerClient {
       ordersPtr.writeBigInt64LE(BigInt(order.OrderExpiry), offset + 40)
     }
 
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignCreateGroupedOrders(
       grouping_type,
       ordersPtr,
       orders.length,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_cancel_order(
     market_index: number,
     order_index: number,
-    nonce: number
-  ): [string | null, string | null] {
-    const result = this.signer.SignCancelOrder(market_index, order_index, nonce)
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignCancelOrder(
+      market_index,
+      order_index,
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_withdraw(
-    usdc_amount: number,
-    nonce: number
-  ): [string | null, string | null] {
-    const result = this.signer.SignWithdraw(usdc_amount, nonce)
+    asset_index: number,
+    route_type: number,
+    amount: number,
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignWithdraw(
+      asset_index,
+      route_type,
+      amount,
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
-  sign_create_sub_account(nonce: number): [string | null, string | null] {
-    const result = this.signer.SignCreateSubAccount(nonce)
+  sign_create_sub_account(
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignCreateSubAccount(
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_cancel_all_orders(
     time_in_force: number,
-    time: number,
-    nonce: number
-  ): [string | null, string | null] {
-    const result = this.signer.SignCancelAllOrders(time_in_force, time, nonce)
+    timestamp_ms: number,
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignCancelAllOrders(
+      time_in_force,
+      timestamp_ms,
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_modify_order(
@@ -843,75 +1054,82 @@ export class SignerClient {
     base_amount: number,
     price: number,
     trigger_price: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignModifyOrder(
       market_index,
       order_index,
       base_amount,
       price,
       trigger_price,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   async sign_transfer(
     eth_private_key: string,
     to_account_index: number,
+    asset_id: number,
+    route_from: number,
+    route_to: number,
     usdc_amount: number,
     fee: number,
     memo: string,
-    nonce: number
-  ): Promise<[string | null, string | null]> {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): Promise<[number | null, string | null, string | null, string | null]> {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignTransfer(
       to_account_index,
+      asset_id,
+      route_from,
+      route_to,
       usdc_amount,
       fee,
       memo,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfoStr, err: error } = extractStrOrErr(result)
+    const decoded = await decodeAndSignTxInfo(eth_private_key, result)
 
-    if (error) {
-      return [txInfoStr, error]
+    if (decoded.err) {
+      return [null, null, null, decoded.err]
     }
 
-    if (!txInfoStr) {
-      return [null, "No transaction info returned"]
-    }
-
-    // Fetch message to sign
-    const txInfo = JSON.parse(txInfoStr)
-    const msgToSign = txInfo.MessageToSign
-    delete txInfo.MessageToSign
-
-    // Sign the message (ethers.js handles the Ethereum message prefix automatically)
-    const wallet = new ethers.Wallet(eth_private_key)
-    const signature = await wallet.signMessage(msgToSign)
-    txInfo.L1Sig = signature
-
-    return [JSON.stringify(txInfo), null]
+    return [decoded.txType, decoded.txInfo, decoded.txHash, null]
   }
 
   sign_create_public_pool(
     operator_fee: number,
     initial_total_shares: number,
     min_operator_share_rate: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignCreatePublicPool(
       operator_fee,
       initial_total_shares,
       min_operator_share_rate,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_update_public_pool(
@@ -919,78 +1137,127 @@ export class SignerClient {
     status: number,
     operator_fee: number,
     min_operator_share_rate: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignUpdatePublicPool(
       public_pool_index,
       status,
       operator_fee,
       min_operator_share_rate,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_mint_shares(
     public_pool_index: number,
     share_amount: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignMintShares(
       public_pool_index,
       share_amount,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_burn_shares(
     public_pool_index: number,
     share_amount: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignBurnShares(
       public_pool_index,
       share_amount,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   sign_update_leverage(
     market_index: number,
     fraction: number,
     margin_mode: number,
-    nonce: number
-  ): [string | null, string | null] {
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
     const result = this.signer.SignUpdateLeverage(
       market_index,
       fraction,
       margin_mode,
-      nonce
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
     )
 
-    const { str: txInfo, err: error } = extractStrOrErr(result)
-    return [txInfo, error]
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
+  }
+
+  sign_update_margin(
+    market_index: number,
+    usdc_amount: number,
+    direction: number,
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): [number | null, string | null, string | null, string | null] {
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const result = this.signer.SignUpdateMargin(
+      market_index,
+      usdc_amount,
+      direction,
+      nonce,
+      actualApiKeyIndex,
+      this.account_index
+    )
+
+    const decoded = decodeTxInfo(result)
+    return [decoded.txType, decoded.txInfo, decoded.txHash, decoded.err]
   }
 
   create_auth_token_with_expiry(
     deadline: number = SignerClient.DEFAULT_10_MIN_AUTH_EXPIRY,
-    timestamp?: number
+    timestamp?: number,
+    api_key_index: number = -1
   ): [string | null, string | null] {
     let actualDeadline = deadline
     if (deadline === SignerClient.DEFAULT_10_MIN_AUTH_EXPIRY) {
       actualDeadline = 10 * SignerClient.MINUTE
     }
     const actualTimestamp = timestamp ?? Math.floor(Date.now() / 1000)
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
 
-    const result = this.signer.CreateAuthToken(actualTimestamp + actualDeadline)
+    const result = this.signer.CreateAuthToken(
+      actualTimestamp + actualDeadline,
+      actualApiKeyIndex,
+      this.account_index
+    )
 
     const { str: auth, err: error } = extractStrOrErr(result)
     return [auth, error]
@@ -1007,11 +1274,6 @@ export class SignerClient {
 
     if (api_key_index === -1 && nonce === -1) {
       ;[actualApiKeyIndex, actualNonce] = this.nonce_manager.next_nonce()
-    }
-
-    const err = this.switch_api_key(actualApiKeyIndex)
-    if (err) {
-      throw new Error(`error switching api key: ${err}`)
     }
 
     try {
@@ -1042,14 +1304,16 @@ export class SignerClient {
   async change_api_key(
     eth_private_key: string,
     new_pubkey: string,
-    nonce: number = -1
+    nonce: number = -1,
+    api_key_index: number = -1
   ): Promise<[any, string | null]> {
     const tx_info = await this.sign_change_api_key(
       eth_private_key,
       new_pubkey,
-      nonce
+      nonce,
+      api_key_index
     )
-    const [txInfo, error] = tx_info
+    const [txType, txInfo, txHash, error] = tx_info
     if (error) {
       return [null, error]
     }
@@ -1059,7 +1323,7 @@ export class SignerClient {
     }
 
     const api_response = await this.send_tx(
-      SignerClient.TX_TYPE_CHANGE_PUB_KEY,
+      txType || SignerClient.TX_TYPE_CHANGE_PUB_KEY,
       txInfo
     )
     return [api_response, null]
@@ -1092,9 +1356,10 @@ export class SignerClient {
           reduce_only,
           trigger_price,
           order_expiry,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1104,7 +1369,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_CREATE_ORDER,
+          txType || SignerClient.TX_TYPE_CREATE_ORDER,
           txInfo
         )
         return [CreateOrder.from_json(txInfo), api_response, null]
@@ -1125,9 +1390,10 @@ export class SignerClient {
         const tx_info = this.sign_create_grouped_orders(
           grouping_type,
           orders,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1137,7 +1403,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_CREATE_GROUP_ORDER,
+          txType || SignerClient.TX_TYPE_CREATE_GROUP_ORDER,
           txInfo
         )
         return [CreateGroupedOrders.from_json(txInfo), api_response, null]
@@ -1310,8 +1576,8 @@ export class SignerClient {
   ): Promise<[any, RespSendTx | null, string | null]> {
     return this.process_api_key_and_nonce(
       async (n: number, ak: number) => {
-        const tx_info = this.sign_cancel_order(market_index, order_index, n)
-        const [txInfo, error] = tx_info
+        const tx_info = this.sign_cancel_order(market_index, order_index, n, ak)
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1321,7 +1587,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_CANCEL_ORDER,
+          txType || SignerClient.TX_TYPE_CANCEL_ORDER,
           txInfo
         )
         return [CancelOrder.from_json(txInfo), api_response, null]
@@ -1440,17 +1706,31 @@ export class SignerClient {
   }
 
   async withdraw(
-    usdc_amount: number,
+    asset_id: number,
+    route_type: number,
+    amount: number,
     nonce: number = -1,
     api_key_index: number = -1
   ): Promise<[any, RespSendTx | null, string | null]> {
     return this.process_api_key_and_nonce(
       async (n: number, ak: number) => {
-        const usdcAmountScaled = Math.floor(
-          usdc_amount * SignerClient.USDC_TICKER_SCALE
+        let scaledAmount: number
+        if (asset_id === SignerClient.ASSET_ID_USDC) {
+          scaledAmount = Math.floor(amount * SignerClient.USDC_TICKER_SCALE)
+        } else if (asset_id === SignerClient.ASSET_ID_ETH) {
+          scaledAmount = Math.floor(amount * SignerClient.ETH_TICKER_SCALE)
+        } else {
+          return [null, null, `Unsupported asset id: ${asset_id}`]
+        }
+
+        const tx_info = this.sign_withdraw(
+          asset_id,
+          route_type,
+          scaledAmount,
+          n,
+          ak
         )
-        const tx_info = this.sign_withdraw(usdcAmountScaled, n)
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1460,7 +1740,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_WITHDRAW,
+          txType || SignerClient.TX_TYPE_WITHDRAW,
           txInfo
         )
         return [Withdraw.from_json(txInfo), api_response, null]
@@ -1471,10 +1751,13 @@ export class SignerClient {
   }
 
   async create_sub_account(
-    nonce: number = -1
+    nonce: number = -1,
+    api_key_index: number = -1
   ): Promise<[string | null, RespSendTx | null, string | null]> {
-    const tx_info = this.sign_create_sub_account(nonce)
-    const [txInfo, error] = tx_info
+    const actualApiKeyIndex =
+      api_key_index === -1 ? this.api_key_index : api_key_index
+    const tx_info = this.sign_create_sub_account(nonce, actualApiKeyIndex)
+    const [txType, txInfo, txHash, error] = tx_info
     if (error) {
       return [null, null, error]
     }
@@ -1484,7 +1767,7 @@ export class SignerClient {
     }
 
     const api_response = await this.send_tx(
-      SignerClient.TX_TYPE_CREATE_SUB_ACCOUNT,
+      txType || SignerClient.TX_TYPE_CREATE_SUB_ACCOUNT,
       txInfo
     )
     return [txInfo, api_response, null]
@@ -1492,14 +1775,19 @@ export class SignerClient {
 
   async cancel_all_orders(
     time_in_force: number,
-    time: number,
+    timestamp_ms: number,
     nonce: number = -1,
     api_key_index: number = -1
   ): Promise<[string | null, RespSendTx | null, string | null]> {
     return this.process_api_key_and_nonce(
       async (n: number, ak: number) => {
-        const tx_info = this.sign_cancel_all_orders(time_in_force, time, n)
-        const [txInfo, error] = tx_info
+        const tx_info = this.sign_cancel_all_orders(
+          time_in_force,
+          timestamp_ms,
+          n,
+          ak
+        )
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1509,7 +1797,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_CANCEL_ALL_ORDERS,
+          txType || SignerClient.TX_TYPE_CANCEL_ALL_ORDERS,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1536,9 +1824,10 @@ export class SignerClient {
           base_amount,
           price,
           trigger_price,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1548,7 +1837,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_MODIFY_ORDER,
+          txType || SignerClient.TX_TYPE_MODIFY_ORDER,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1561,7 +1850,10 @@ export class SignerClient {
   async transfer(
     eth_private_key: string,
     to_account_index: number,
-    usdc_amount: number,
+    asset_id: number,
+    route_from: number,
+    route_to: number,
+    amount: number,
     fee: number,
     memo: string,
     nonce: number = -1,
@@ -1569,18 +1861,28 @@ export class SignerClient {
   ): Promise<[string | null, RespSendTx | null, string | null]> {
     return this.process_api_key_and_nonce(
       async (n: number, ak: number) => {
-        const usdcAmountScaled = Math.floor(
-          usdc_amount * SignerClient.USDC_TICKER_SCALE
-        )
+        let scaledAmount: number
+        if (asset_id === SignerClient.ASSET_ID_USDC) {
+          scaledAmount = Math.floor(amount * SignerClient.USDC_TICKER_SCALE)
+        } else if (asset_id === SignerClient.ASSET_ID_ETH) {
+          scaledAmount = Math.floor(amount * SignerClient.ETH_TICKER_SCALE)
+        } else {
+          return [null, null, `Unsupported asset id: ${asset_id}`]
+        }
+
         const tx_info = await this.sign_transfer(
           eth_private_key,
           to_account_index,
-          usdcAmountScaled,
+          asset_id,
+          route_from,
+          route_to,
+          scaledAmount,
           fee,
           memo,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1590,7 +1892,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_TRANSFER,
+          txType || SignerClient.TX_TYPE_TRANSFER,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1613,9 +1915,10 @@ export class SignerClient {
           operator_fee,
           initial_total_shares,
           min_operator_share_rate,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1625,7 +1928,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_CREATE_PUBLIC_POOL,
+          txType || SignerClient.TX_TYPE_CREATE_PUBLIC_POOL,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1650,9 +1953,10 @@ export class SignerClient {
           status,
           operator_fee,
           min_operator_share_rate,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1662,7 +1966,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_UPDATE_PUBLIC_POOL,
+          txType || SignerClient.TX_TYPE_UPDATE_PUBLIC_POOL,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1683,9 +1987,10 @@ export class SignerClient {
         const tx_info = this.sign_mint_shares(
           public_pool_index,
           share_amount,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1695,7 +2000,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_MINT_SHARES,
+          txType || SignerClient.TX_TYPE_MINT_SHARES,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1716,9 +2021,10 @@ export class SignerClient {
         const tx_info = this.sign_burn_shares(
           public_pool_index,
           share_amount,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1728,7 +2034,7 @@ export class SignerClient {
         }
 
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_BURN_SHARES,
+          txType || SignerClient.TX_TYPE_BURN_SHARES,
           txInfo
         )
         return [txInfo, api_response, null]
@@ -1752,9 +2058,10 @@ export class SignerClient {
           market_index,
           imf,
           margin_mode,
-          n
+          n,
+          ak
         )
-        const [txInfo, error] = tx_info
+        const [txType, txInfo, txHash, error] = tx_info
         if (error) {
           return [null, null, error]
         }
@@ -1763,8 +2070,47 @@ export class SignerClient {
           return [null, null, "No transaction info"]
         }
 
+        const finalTxType: number =
+          txType ?? SignerClient.TX_TYPE_UPDATE_LEVERAGE
+        const api_response = await this.send_tx(finalTxType, txInfo)
+        return [txInfo, api_response, null]
+      },
+      api_key_index,
+      nonce
+    )
+  }
+
+  async update_margin(
+    market_index: number,
+    usdc_amount: number,
+    direction: number,
+    nonce: number = -1,
+    api_key_index: number = -1
+  ): Promise<[string | null, RespSendTx | null, string | null]> {
+    return this.process_api_key_and_nonce(
+      async (n: number, ak: number) => {
+        const usdcAmountScaled = Math.floor(
+          usdc_amount * SignerClient.USDC_TICKER_SCALE
+        )
+        const tx_info = this.sign_update_margin(
+          market_index,
+          usdcAmountScaled,
+          direction,
+          n,
+          ak
+        )
+        const [txType, txInfo, txHash, error] = tx_info
+        if (error) {
+          return [null, null, error]
+        }
+
+        if (!txInfo) {
+          return [null, null, "No transaction info"]
+        }
+
+        // Note: There's no TX_TYPE_UPDATE_MARGIN constant, using the txType from response
         const api_response = await this.send_tx(
-          SignerClient.TX_TYPE_UPDATE_LEVERAGE,
+          txType || SignerClient.TX_TYPE_UPDATE_LEVERAGE,
           txInfo
         )
         return [txInfo, api_response, null]

@@ -105,6 +105,7 @@ async function fastWithdraw({
       {
         params: { account_index: accountIndex },
         headers: { Authorization: auth_token! },
+        timeout: 10000,
       }
     )
 
@@ -115,6 +116,7 @@ async function fastWithdraw({
     }
 
     const to_account = pool_info.to_account_index
+
     console.log(
       `Pool: ${to_account}, Limit: ${pool_info.withdraw_limit || "N/A"}`
     )
@@ -171,99 +173,85 @@ async function fastWithdraw({
     const apiKeyIndexNum = Number(API_KEY_INDEX)
     const usdcIntNum = Number(usdc_int)
 
-    console.log("nonceNum", nonceNum)
-    console.log("feeNum", feeNum)
-    console.log("toAccountNum", toAccountNum)
-    console.log("accountIndexNum", accountIndexNum)
-    console.log("apiKeyIndexNum", apiKeyIndexNum)
-    console.log("usdcIntNum", usdcIntNum)
-
     const memo_hex = memo_list
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("")
-    const l1_msg = `Transfer
 
-nonce: 0x${hex16(nonceNum)}
-from: 0x${hex16(accountIndexNum)}
-api key: 0x${hex16(apiKeyIndexNum)}
-to: 0x${hex16(toAccountNum)}
-amount: 0x${hex16(usdcIntNum)}
-fee: 0x${hex16(feeNum)}
-memo: ${memo_hex}
-Only sign this message for a trusted client!`
-
-    // Sign L1 message
-    const l1_sig = await ethAccount.signMessage(l1_msg)
-
-    const [temp_tx, sign_err] = await client.sign_transfer(
+    const [txType, tx_info_str, txHash, sign_err] = await client.sign_transfer(
       ethPrivateKey,
-      to_account,
+      toAccountNum,
+      SignerClient.ASSET_ID_USDC,
+      SignerClient.ROUTE_PERP,
+      SignerClient.ROUTE_PERP,
       usdc_int,
-      fee,
-      "X".repeat(32),
-      nonce
+      feeNum,
+      memo_hex,
+      nonceNum,
+      API_KEY_INDEX
     )
 
     if (sign_err) {
       throw new Error(`L2 signing failed: ${sign_err}`)
     }
 
-    if (!temp_tx) {
+    if (!tx_info_str) {
       throw new Error("No transaction info returned")
     }
 
-    const tx_info = JSON.parse(temp_tx)
-    tx_info.Memo = memo_list
-    tx_info.L1Sig = l1_sig
-
-    console.log("Transaction info:")
-    console.log("  L1Sig:", tx_info.L1Sig)
-    console.log("  Memo length:", tx_info.Memo?.length)
-    console.log("  FromAccountIndex:", tx_info.FromAccountIndex)
-    console.log("  ToAccountIndex:", tx_info.ToAccountIndex)
-    console.log("  USDCAmount:", tx_info.USDCAmount)
-    console.log("  Nonce:", tx_info.Nonce)
-
     console.log("Submitting...")
+    console.log(`TX Info length: ${tx_info_str.length} chars`)
+    console.log(`To address: ${ethAddress}`)
 
-    // const submitResponse = await axios.post(
-    //   `${BASE_URL}/api/v1/fastwithdraw`,
-    //   new URLSearchParams({
-    //     tx_info: JSON.stringify(tx_info),
-    //     to_address: ethAddress,
-    //   }),
-    //   {
-    //     headers: {
-    //       Authorization: auth_token!,
-    //       "Content-Type": "application/x-www-form-urlencoded",
-    //     },
-    //   }
-    // )
+    const formData = new URLSearchParams({
+      tx_info: tx_info_str,
+      to_address: ethAddress,
+    })
 
-    // const result = submitResponse.data
+    const submitResponse = await axios.post(
+      `${BASE_URL}/api/v1/fastwithdraw`,
+      formData.toString(),
+      {
+        headers: {
+          Authorization: auth_token!,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        timeout: 30000,
+      }
+    )
 
-    // if (result.code === 200) {
-    //   console.log(`✓ Success! TX: ${result.tx_hash}`)
-    // } else {
-    //   throw new Error(`Failed: ${result.message}`)
-    // }
+    const result = submitResponse.data
+
+    if (result.code === 200) {
+      console.log(`✓ Success! TX: ${result.tx_hash}`)
+    } else {
+      throw new Error(`Failed: ${result.message}`)
+    }
   } catch (error) {
     if (error instanceof AxiosError) {
-      console.error(
-        `Error submitting fast withdraw: ${JSON.stringify(
-          error.response?.data
-        )}`
-      )
+      if (error.response) {
+        console.error(
+          `Error submitting fast withdraw: Status ${
+            error.response.status
+          }, ${JSON.stringify(error.response.data)}`
+        )
+      } else if (error.request) {
+        console.error(
+          `Error submitting fast withdraw: No response received. Request: ${error.message}`
+        )
+      } else {
+        console.error(`Error submitting fast withdraw: ${error.message}`)
+      }
     } else {
       console.error(`Error submitting fast withdraw: ${error}`)
     }
+    throw error
   } finally {
     await client.close()
   }
 }
 
 fastWithdraw({
-  amountUsdc: 50000,
+  amountUsdc: 50,
   apiKeyPrivateKey: API_KEY_PRIVATE_KEY,
   ethPrivateKey: ETH_PRIVATE_KEY,
 })
