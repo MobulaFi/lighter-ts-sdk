@@ -19,7 +19,7 @@
     "fast-withdraw": "ts-node -r dotenv/config examples/scripts/fast-withdraw.ts",
     "account": "ts-node -r dotenv/config examples/scripts/check-account.ts",
     "positions": "ts-node -r dotenv/config examples/scripts/positions-interaction.ts",
-    "build": "tsc && cp -r src/signers dist/signers",
+    "build": "tsc && rm -rf dist/signers && cp -r src/signers dist/signers",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
