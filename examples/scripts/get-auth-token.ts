@@ -17,10 +17,10 @@ interface AuthTokens {
  * @param tokensFile - Path to auth-tokens.json (defaults to "auth-tokens.json")
  * @returns The auth token string, or null if no valid token found
  */
-export function getCurrentAuthToken(
+export async function getCurrentAuthToken(
   accountIndex: number,
   tokensFile: string = "auth-tokens.json"
-): string | null {
+): Promise<string | null> {
   try {
     const tokensPath = path.resolve(tokensFile)
     const tokensContent = fs.readFileSync(tokensPath, "utf-8")

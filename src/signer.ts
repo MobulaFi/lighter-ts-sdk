@@ -1296,7 +1296,11 @@ export class SignerClient {
         return [null, null, trim_exc(error.message || String(error))]
       } else {
         this.nonce_manager.acknowledge_failure(actualApiKeyIndex)
-        return [null, null, trim_exc(error.message || String(error))]
+        return [
+          null,
+          null,
+          trim_exc(error.response?.data?.message || String(error)),
+        ]
       }
     }
   }
@@ -2062,6 +2066,7 @@ export class SignerClient {
           ak
         )
         const [txType, txInfo, txHash, error] = tx_info
+
         if (error) {
           return [null, null, error]
         }
@@ -2073,6 +2078,7 @@ export class SignerClient {
         const finalTxType: number =
           txType ?? SignerClient.TX_TYPE_UPDATE_LEVERAGE
         const api_response = await this.send_tx(finalTxType, txInfo)
+
         return [txInfo, api_response, null]
       },
       api_key_index,
