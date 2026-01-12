@@ -1,38 +1,44 @@
-import { AccountApi, Configuration } from "../../src"
+import { AccountApi, AccountByEnum, Configuration } from "../../src"
 import { MAINNET_BASE_URL } from "./constants"
 
-async function getAccountIndex(ethAddress: string): Promise<number | null> {
+async function checkAccount(ethAddress: string): Promise<any> {
   const configuration = new Configuration({
     basePath: MAINNET_BASE_URL,
   })
 
   const apiClient = new AccountApi(configuration)
 
-  let accountIndex: number | null = null
-
   try {
-    const response = await apiClient.accountsByL1Address(ethAddress)
-    const subAccounts = response.data.sub_accounts
+    const response = await apiClient.account(
+      AccountByEnum.L1Address,
+      ethAddress
+    )
 
-    if (subAccounts.length > 0) {
-      accountIndex = subAccounts[0].index
+    const accounts = response.data?.accounts
+
+    if (!accounts || accounts.length === 0) {
+      throw new Error("Account not found")
     }
 
-    if (!accountIndex) {
-      throw new Error("Account index not found")
+    const mainAccount = accounts.find(
+      (account: any) => account.account_type === 0
+    )
+
+    if (!mainAccount) {
+      throw new Error("Main account not found")
     }
 
-    return accountIndex
-  } catch (error) {
-    throw new Error("Account index not found")
+    console.log("Main account: ", mainAccount)
+  } catch (error: any) {
+    throw new Error(error.message)
   }
 }
 
-const ACCOUNT_ADDRESS = "0x0435b1aE398D3FD9035142d529B20dd0Cf722eD7"
+const ACCOUNT_ADDRESS = "0x0Db38A5a236F29EECE35faEed837b1e6E7D2A2e6"
 
-getAccountIndex(ACCOUNT_ADDRESS)
-  .then((accountIndex) => {
-    console.log(`Account index: ${accountIndex}`)
+checkAccount(ACCOUNT_ADDRESS)
+  .then((account) => {
+    console.log(`Account: ${JSON.stringify(account, null, 2)}`)
   })
   .catch((error) => {
     console.error(error)

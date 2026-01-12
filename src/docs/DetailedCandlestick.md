@@ -10,6 +10,10 @@ Name | Type | Description | Notes
 **high** | **number** |  | [default to undefined]
 **low** | **number** |  | [default to undefined]
 **close** | **number** |  | [default to undefined]
+**open_raw** | **number** |  | [default to undefined]
+**high_raw** | **number** |  | [default to undefined]
+**low_raw** | **number** |  | [default to undefined]
+**close_raw** | **number** |  | [default to undefined]
 **volume0** | **number** |  | [default to undefined]
 **volume1** | **number** |  | [default to undefined]
 **last_trade_id** | **number** |  | [default to undefined]
@@ -26,6 +30,10 @@ const instance: DetailedCandlestick = {
     high,
     low,
     close,
+    open_raw,
+    high_raw,
+    low_raw,
+    close_raw,
     volume0,
     volume1,
     last_trade_id,

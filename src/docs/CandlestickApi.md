@@ -24,7 +24,7 @@ const configuration = new Configuration();
 const apiInstance = new CandlestickApi(configuration);
 
 let marketId: number; // (default to undefined)
-let resolution: '1m' | '5m' | '15m' | '1h' | '4h' | '1d'; // (default to undefined)
+let resolution: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '12h' | '1d' | '1w'; // (default to undefined)
 let startTimestamp: number; // (default to undefined)
 let endTimestamp: number; // (default to undefined)
 let countBack: number; // (default to undefined)
@@ -45,7 +45,7 @@ const { status, data } = await apiInstance.candlesticks(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **marketId** | [**number**] |  | defaults to undefined|
-| **resolution** | [**&#39;1m&#39; | &#39;5m&#39; | &#39;15m&#39; | &#39;1h&#39; | &#39;4h&#39; | &#39;1d&#39;**]**Array<&#39;1m&#39; &#124; &#39;5m&#39; &#124; &#39;15m&#39; &#124; &#39;1h&#39; &#124; &#39;4h&#39; &#124; &#39;1d&#39;>** |  | defaults to undefined|
+| **resolution** | [**&#39;1m&#39; | &#39;5m&#39; | &#39;15m&#39; | &#39;30m&#39; | &#39;1h&#39; | &#39;4h&#39; | &#39;12h&#39; | &#39;1d&#39; | &#39;1w&#39;**]**Array<&#39;1m&#39; &#124; &#39;5m&#39; &#124; &#39;15m&#39; &#124; &#39;30m&#39; &#124; &#39;1h&#39; &#124; &#39;4h&#39; &#124; &#39;12h&#39; &#124; &#39;1d&#39; &#124; &#39;1w&#39;>** |  | defaults to undefined|
 | **startTimestamp** | [**number**] |  | defaults to undefined|
 | **endTimestamp** | [**number**] |  | defaults to undefined|
 | **countBack** | [**number**] |  | defaults to undefined|

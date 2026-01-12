@@ -1,6 +1,6 @@
 {
   "name": "zklighter-sdk",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "TypeScript SDK for interacting with the Lighter (zkLighter) API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,6 @@
     "README.md"
   ],
   "scripts": {
-    "test": "ts-node -r dotenv/config main.ts",
     "key": "ts-node -r dotenv/config examples/scripts/generate-api-key.ts",
     "order": "ts-node -r dotenv/config examples/scripts/create-order.ts",
     "cancel-order": "ts-node -r dotenv/config examples/scripts/cancel-order.ts",
@@ -21,6 +20,7 @@
     "account": "ts-node -r dotenv/config examples/scripts/check-account.ts",
     "positions": "ts-node -r dotenv/config examples/scripts/positions-interaction.ts",
     "leverage": "ts-node -r dotenv/config examples/scripts/update-leverage.ts",
+    "market": "ts-node -r dotenv/config examples/scripts/market-details.ts",
     "build": "tsc && rm -rf dist/signers && cp -r src/signers dist/signers",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build"

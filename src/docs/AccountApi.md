@@ -14,7 +14,6 @@ All URIs are relative to *https://mainnet.zklighter.elliot.ai*
 |[**liquidations**](#liquidations) | **GET** /api/v1/liquidations | liquidations|
 |[**pnl**](#pnl) | **GET** /api/v1/pnl | pnl|
 |[**positionFunding**](#positionfunding) | **GET** /api/v1/positionFunding | positionFunding|
-|[**publicPools**](#publicpools) | **GET** /api/v1/publicPools | publicPools|
 |[**publicPoolsMetadata**](#publicpoolsmetadata) | **GET** /api/v1/publicPoolsMetadata | publicPoolsMetadata|
 
 # **account**
@@ -611,73 +610,6 @@ const { status, data } = await apiInstance.positionFunding(
 ### Return type
 
 **PositionFundings**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-|**200** | A successful response. |  -  |
-|**400** | Bad request |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **publicPools**
-> PublicPools publicPools()
-
-Get public pools
-
-### Example
-
-```typescript
-import {
-    AccountApi,
-    Configuration
-} from './api';
-
-const configuration = new Configuration();
-const apiInstance = new AccountApi(configuration);
-
-let index: number; // (default to undefined)
-let limit: number; // (default to undefined)
-let authorization: string; // (optional) (default to undefined)
-let auth: string; // (optional) (default to undefined)
-let filter: 'all' | 'user' | 'protocol' | 'account_index'; // (optional) (default to undefined)
-let accountIndex: number; // (optional) (default to undefined)
-
-const { status, data } = await apiInstance.publicPools(
-    index,
-    limit,
-    authorization,
-    auth,
-    filter,
-    accountIndex
-);
-```
-
-### Parameters
-
-|Name | Type | Description  | Notes|
-|------------- | ------------- | ------------- | -------------|
-| **index** | [**number**] |  | defaults to undefined|
-| **limit** | [**number**] |  | defaults to undefined|
-| **authorization** | [**string**] |  | (optional) defaults to undefined|
-| **auth** | [**string**] |  | (optional) defaults to undefined|
-| **filter** | [**&#39;all&#39; | &#39;user&#39; | &#39;protocol&#39; | &#39;account_index&#39;**]**Array<&#39;all&#39; &#124; &#39;user&#39; &#124; &#39;protocol&#39; &#124; &#39;account_index&#39;>** |  | (optional) defaults to undefined|
-| **accountIndex** | [**number**] |  | (optional) defaults to undefined|
-
-
-### Return type
-
-**PublicPools**
 
 ### Authorization
 

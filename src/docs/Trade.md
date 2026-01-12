@@ -14,6 +14,8 @@ Name | Type | Description | Notes
 **usd_amount** | **string** |  | [default to undefined]
 **ask_id** | **number** |  | [default to undefined]
 **bid_id** | **number** |  | [default to undefined]
+**ask_client_id** | **number** |  | [default to undefined]
+**bid_client_id** | **number** |  | [default to undefined]
 **ask_account_id** | **number** |  | [default to undefined]
 **bid_account_id** | **number** |  | [default to undefined]
 **is_maker_ask** | **boolean** |  | [default to undefined]
@@ -45,6 +47,8 @@ const instance: Trade = {
     usd_amount,
     ask_id,
     bid_id,
+    ask_client_id,
+    bid_client_id,
     ask_account_id,
     bid_account_id,
     is_maker_ask,

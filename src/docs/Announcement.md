@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **title** | **string** |  | [default to undefined]
 **content** | **string** |  | [default to undefined]
 **created_at** | **number** |  | [default to undefined]
+**expired_at** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -18,6 +19,7 @@ const instance: Announcement = {
     title,
     content,
     created_at,
+    expired_at,
 };
 ```
 

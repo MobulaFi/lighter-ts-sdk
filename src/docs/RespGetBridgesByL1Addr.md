@@ -1,4 +1,4 @@
-# RespSendTx
+# RespGetBridgesByL1Addr
 
 
 ## Properties
@@ -7,21 +7,17 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **code** | **number** |  | [default to undefined]
 **message** | **string** |  | [optional] [default to undefined]
-**tx_hash** | **string** |  | [default to undefined]
-**predicted_execution_time_ms** | **number** |  | [default to undefined]
-**volume_quota_remaining** | **number** |  | [default to undefined]
+**bridges** | [**Array&lt;Bridge&gt;**](Bridge.md) |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { RespSendTx } from './api';
+import { RespGetBridgesByL1Addr } from './api';
 
-const instance: RespSendTx = {
+const instance: RespGetBridgesByL1Addr = {
     code,
     message,
-    tx_hash,
-    predicted_execution_time_ms,
-    volume_quota_remaining,
+    bridges,
 };
 ```
 

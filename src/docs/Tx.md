@@ -20,6 +20,7 @@ Name | Type | Description | Notes
 **executed_at** | **number** |  | [default to undefined]
 **sequence_index** | **number** |  | [default to undefined]
 **parent_hash** | **string** |  | [default to undefined]
+**api_key_index** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -42,6 +43,7 @@ const instance: Tx = {
     executed_at,
     sequence_index,
     parent_hash,
+    api_key_index,
 };
 ```
 

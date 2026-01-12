@@ -14,7 +14,10 @@ Name | Type | Description | Notes
 **cursor** | **string** |  | [optional] [default to undefined]
 **from** | **number** |  | [optional] [default to -1]
 **ask_filter** | **number** |  | [optional] [default to undefined]
+**role** | **string** |  | [optional] [default to RoleEnum_All]
+**type** | **string** |  | [optional] [default to TypeEnum_All]
 **limit** | **number** |  | [default to undefined]
+**aggregate** | **boolean** |  | [optional] [default to false]
 
 ## Example
 
@@ -31,7 +34,10 @@ const instance: ReqGetTrades = {
     cursor,
     from,
     ask_filter,
+    role,
+    type,
     limit,
+    aggregate,
 };
 ```
 

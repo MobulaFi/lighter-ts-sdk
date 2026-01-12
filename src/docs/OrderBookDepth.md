@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **asks** | [**Array&lt;PriceLevel&gt;**](PriceLevel.md) |  | [default to undefined]
 **bids** | [**Array&lt;PriceLevel&gt;**](PriceLevel.md) |  | [default to undefined]
 **offset** | **number** |  | [default to undefined]
+**nonce** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -22,6 +23,7 @@ const instance: OrderBookDepth = {
     asks,
     bids,
     offset,
+    nonce,
 };
 ```
 

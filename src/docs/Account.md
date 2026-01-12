@@ -12,7 +12,6 @@ Name | Type | Description | Notes
 **l1_address** | **string** |  | [default to undefined]
 **cancel_all_time** | **number** |  | [default to undefined]
 **total_order_count** | **number** |  | [default to undefined]
-**total_isolated_order_count** | **number** |  | [default to undefined]
 **pending_order_count** | **number** |  | [default to undefined]
 **available_balance** | **string** |  | [default to undefined]
 **status** | **number** |  | [default to undefined]
@@ -31,7 +30,6 @@ const instance: Account = {
     l1_address,
     cancel_all_time,
     total_order_count,
-    total_isolated_order_count,
     pending_order_count,
     available_balance,
     status,

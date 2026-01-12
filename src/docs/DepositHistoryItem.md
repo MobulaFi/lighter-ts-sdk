@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **string** |  | [default to undefined]
+**asset_id** | **number** |  | [default to undefined]
 **amount** | **string** |  | [default to undefined]
 **timestamp** | **number** |  | [default to undefined]
 **status** | **string** |  | [default to undefined]
@@ -18,6 +19,7 @@ import { DepositHistoryItem } from './api';
 
 const instance: DepositHistoryItem = {
     id,
+    asset_id,
     amount,
     timestamp,
     status,

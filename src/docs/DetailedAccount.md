@@ -12,7 +12,6 @@ Name | Type | Description | Notes
 **l1_address** | **string** |  | [default to undefined]
 **cancel_all_time** | **number** |  | [default to undefined]
 **total_order_count** | **number** |  | [default to undefined]
-**total_isolated_order_count** | **number** |  | [default to undefined]
 **pending_order_count** | **number** |  | [default to undefined]
 **available_balance** | **string** |  | [default to undefined]
 **status** | **number** |  | [default to undefined]
@@ -23,6 +22,7 @@ Name | Type | Description | Notes
 **can_invite** | **boolean** |  Remove After FE uses L1 meta endpoint | [default to undefined]
 **referral_points_percentage** | **string** |  Remove After FE uses L1 meta endpoint | [default to undefined]
 **positions** | [**Array&lt;AccountPosition&gt;**](AccountPosition.md) |  | [default to undefined]
+**assets** | [**Array&lt;AccountAsset&gt;**](AccountAsset.md) |  | [default to undefined]
 **total_asset_value** | **string** |  | [default to undefined]
 **cross_asset_value** | **string** |  | [default to undefined]
 **pool_info** | [**PublicPoolInfo**](PublicPoolInfo.md) |  | [default to undefined]
@@ -41,7 +41,6 @@ const instance: DetailedAccount = {
     l1_address,
     cancel_all_time,
     total_order_count,
-    total_isolated_order_count,
     pending_order_count,
     available_balance,
     status,
@@ -52,6 +51,7 @@ const instance: DetailedAccount = {
     can_invite,
     referral_points_percentage,
     positions,
+    assets,
     total_asset_value,
     cross_asset_value,
     pool_info,

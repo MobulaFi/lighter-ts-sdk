@@ -7,6 +7,7 @@ All URIs are relative to *https://mainnet.zklighter.elliot.ai*
 |[**_export**](#_export) | **GET** /api/v1/export | export|
 |[**accountActiveOrders**](#accountactiveorders) | **GET** /api/v1/accountActiveOrders | accountActiveOrders|
 |[**accountInactiveOrders**](#accountinactiveorders) | **GET** /api/v1/accountInactiveOrders | accountInactiveOrders|
+|[**assetDetails**](#assetdetails) | **GET** /api/v1/assetDetails | assetDetails|
 |[**exchangeStats**](#exchangestats) | **GET** /api/v1/exchangeStats | exchangeStats|
 |[**orderBookDetails**](#orderbookdetails) | **GET** /api/v1/orderBookDetails | orderBookDetails|
 |[**orderBookOrders**](#orderbookorders) | **GET** /api/v1/orderBookOrders | orderBookOrders|
@@ -212,6 +213,58 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **assetDetails**
+> AssetDetails assetDetails()
+
+Get asset details
+
+### Example
+
+```typescript
+import {
+    OrderApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new OrderApi(configuration);
+
+let assetId: number; // (optional) (default to 0)
+
+const { status, data } = await apiInstance.assetDetails(
+    assetId
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **assetId** | [**number**] |  | (optional) defaults to 0|
+
+
+### Return type
+
+**AssetDetails**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | A successful response. |  -  |
+|**400** | Bad request |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **exchangeStats**
 > ExchangeStats exchangeStats()
 
@@ -274,9 +327,11 @@ const configuration = new Configuration();
 const apiInstance = new OrderApi(configuration);
 
 let marketId: number; // (optional) (default to 255)
+let filter: 'all' | 'spot' | 'perp'; // (optional) (default to 'all')
 
 const { status, data } = await apiInstance.orderBookDetails(
-    marketId
+    marketId,
+    filter
 );
 ```
 
@@ -285,6 +340,7 @@ const { status, data } = await apiInstance.orderBookDetails(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **marketId** | [**number**] |  | (optional) defaults to 255|
+| **filter** | [**&#39;all&#39; | &#39;spot&#39; | &#39;perp&#39;**]**Array<&#39;all&#39; &#124; &#39;spot&#39; &#124; &#39;perp&#39;>** |  | (optional) defaults to 'all'|
 
 
 ### Return type
@@ -381,9 +437,11 @@ const configuration = new Configuration();
 const apiInstance = new OrderApi(configuration);
 
 let marketId: number; // (optional) (default to 255)
+let filter: 'all' | 'spot' | 'perp'; // (optional) (default to 'all')
 
 const { status, data } = await apiInstance.orderBooks(
-    marketId
+    marketId,
+    filter
 );
 ```
 
@@ -392,6 +450,7 @@ const { status, data } = await apiInstance.orderBooks(
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
 | **marketId** | [**number**] |  | (optional) defaults to 255|
+| **filter** | [**&#39;all&#39; | &#39;spot&#39; | &#39;perp&#39;**]**Array<&#39;all&#39; &#124; &#39;spot&#39; &#124; &#39;perp&#39;>** |  | (optional) defaults to 'all'|
 
 
 ### Return type
@@ -498,6 +557,9 @@ let sortDir: 'desc'; // (optional) (default to 'desc')
 let cursor: string; // (optional) (default to undefined)
 let from: number; // (optional) (default to -1)
 let askFilter: number; // (optional) (default to -1)
+let role: 'all' | 'maker' | 'taker'; // (optional) (default to 'all')
+let type: 'all' | 'trade' | 'liquidation' | 'deleverage' | 'market-settlement'; // (optional) (default to 'all')
+let aggregate: boolean; // (optional) (default to false)
 
 const { status, data } = await apiInstance.trades(
     sortBy,
@@ -510,7 +572,10 @@ const { status, data } = await apiInstance.trades(
     sortDir,
     cursor,
     from,
-    askFilter
+    askFilter,
+    role,
+    type,
+    aggregate
 );
 ```
 
@@ -529,6 +594,9 @@ const { status, data } = await apiInstance.trades(
 | **cursor** | [**string**] |  | (optional) defaults to undefined|
 | **from** | [**number**] |  | (optional) defaults to -1|
 | **askFilter** | [**number**] |  | (optional) defaults to -1|
+| **role** | [**&#39;all&#39; | &#39;maker&#39; | &#39;taker&#39;**]**Array<&#39;all&#39; &#124; &#39;maker&#39; &#124; &#39;taker&#39;>** |  | (optional) defaults to 'all'|
+| **type** | [**&#39;all&#39; | &#39;trade&#39; | &#39;liquidation&#39; | &#39;deleverage&#39; | &#39;market-settlement&#39;**]**Array<&#39;all&#39; &#124; &#39;trade&#39; &#124; &#39;liquidation&#39; &#124; &#39;deleverage&#39; &#124; &#39;market-settlement&#39;>** |  | (optional) defaults to 'all'|
+| **aggregate** | [**boolean**] |  | (optional) defaults to false|
 
 
 ### Return type

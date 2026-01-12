@@ -36,6 +36,8 @@ Name | Type | Description | Notes
 **to_cancel_order_id_0** | **string** |  | [default to undefined]
 **block_height** | **number** |  | [default to undefined]
 **timestamp** | **number** |  | [default to undefined]
+**created_at** | **number** |  | [default to undefined]
+**updated_at** | **number** |  | [default to undefined]
 
 ## Example
 
@@ -74,6 +76,8 @@ const instance: Order = {
     to_cancel_order_id_0,
     block_height,
     timestamp,
+    created_at,
+    updated_at,
 };
 ```
 

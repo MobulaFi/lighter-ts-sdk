@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **total_shares** | **number** |  | [default to undefined]
 **operator_shares** | **number** |  | [default to undefined]
 **annual_percentage_yield** | **number** |  | [default to undefined]
+**sharpe_ratio** | **number** |  | [default to undefined]
 **daily_returns** | [**Array&lt;DailyReturn&gt;**](DailyReturn.md) |  | [default to undefined]
 **share_prices** | [**Array&lt;SharePrice&gt;**](SharePrice.md) |  | [default to undefined]
 
@@ -26,6 +27,7 @@ const instance: PublicPoolInfo = {
     total_shares,
     operator_shares,
     annual_percentage_yield,
+    sharpe_ratio,
     daily_returns,
     share_prices,
 };

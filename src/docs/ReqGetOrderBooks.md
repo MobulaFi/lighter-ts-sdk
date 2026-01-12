@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **market_id** | **number** |  | [optional] [default to undefined]
+**filter** | **string** |  | [optional] [default to FilterEnum_All]
 
 ## Example
 
@@ -14,6 +15,7 @@ import { ReqGetOrderBooks } from './api';
 
 const instance: ReqGetOrderBooks = {
     market_id,
+    filter,
 };
 ```
 

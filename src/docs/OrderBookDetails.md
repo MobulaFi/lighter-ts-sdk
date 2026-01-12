@@ -7,7 +7,8 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **code** | **number** |  | [default to undefined]
 **message** | **string** |  | [optional] [default to undefined]
-**order_book_details** | [**Array&lt;OrderBookDetail&gt;**](OrderBookDetail.md) |  | [default to undefined]
+**order_book_details** | [**Array&lt;PerpsOrderBookDetail&gt;**](PerpsOrderBookDetail.md) |  | [default to undefined]
+**spot_order_book_details** | [**Array&lt;SpotOrderBookDetail&gt;**](SpotOrderBookDetail.md) |  | [default to undefined]
 
 ## Example
 
@@ -18,6 +19,7 @@ const instance: OrderBookDetails = {
     code,
     message,
     order_book_details,
+    spot_order_book_details,
 };
 ```
 

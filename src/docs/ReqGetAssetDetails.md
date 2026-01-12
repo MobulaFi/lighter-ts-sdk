@@ -1,21 +1,19 @@
-# ReqGetOrderBookDetails
+# ReqGetAssetDetails
 
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**market_id** | **number** |  | [optional] [default to undefined]
-**filter** | **string** |  | [optional] [default to FilterEnum_All]
+**asset_id** | **number** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { ReqGetOrderBookDetails } from './api';
+import { ReqGetAssetDetails } from './api';
 
-const instance: ReqGetOrderBookDetails = {
-    market_id,
-    filter,
+const instance: ReqGetAssetDetails = {
+    asset_id,
 };
 ```
 

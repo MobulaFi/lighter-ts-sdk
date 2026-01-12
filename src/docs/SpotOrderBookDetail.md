@@ -1,4 +1,4 @@
-# OrderBook
+# SpotOrderBookDetail
 
 
 ## Properties
@@ -20,13 +20,23 @@ Name | Type | Description | Notes
 **supported_size_decimals** | **number** |  | [default to undefined]
 **supported_price_decimals** | **number** |  | [default to undefined]
 **supported_quote_decimals** | **number** |  | [default to undefined]
+**size_decimals** | **number** |  | [default to undefined]
+**price_decimals** | **number** |  | [default to undefined]
+**last_trade_price** | **number** |  | [default to undefined]
+**daily_trades_count** | **number** |  | [default to undefined]
+**daily_base_token_volume** | **number** |  | [default to undefined]
+**daily_quote_token_volume** | **number** |  | [default to undefined]
+**daily_price_low** | **number** |  | [default to undefined]
+**daily_price_high** | **number** |  | [default to undefined]
+**daily_price_change** | **number** |  | [default to undefined]
+**daily_chart** | **{ [key: string]: number; }** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { OrderBook } from './api';
+import { SpotOrderBookDetail } from './api';
 
-const instance: OrderBook = {
+const instance: SpotOrderBookDetail = {
     symbol,
     market_id,
     market_type,
@@ -42,6 +52,16 @@ const instance: OrderBook = {
     supported_size_decimals,
     supported_price_decimals,
     supported_quote_decimals,
+    size_decimals,
+    price_decimals,
+    last_trade_price,
+    daily_trades_count,
+    daily_base_token_volume,
+    daily_quote_token_volume,
+    daily_price_low,
+    daily_price_high,
+    daily_price_change,
+    daily_chart,
 };
 ```
 

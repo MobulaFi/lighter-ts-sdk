@@ -1,4 +1,4 @@
-# RespSendTx
+# AssetDetails
 
 
 ## Properties
@@ -7,21 +7,17 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **code** | **number** |  | [default to undefined]
 **message** | **string** |  | [optional] [default to undefined]
-**tx_hash** | **string** |  | [default to undefined]
-**predicted_execution_time_ms** | **number** |  | [default to undefined]
-**volume_quota_remaining** | **number** |  | [default to undefined]
+**asset_details** | [**Array&lt;Asset&gt;**](Asset.md) |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { RespSendTx } from './api';
+import { AssetDetails } from './api';
 
-const instance: RespSendTx = {
+const instance: AssetDetails = {
     code,
     message,
-    tx_hash,
-    predicted_execution_time_ms,
-    volume_quota_remaining,
+    asset_details,
 };
 ```
 

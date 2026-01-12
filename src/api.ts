@@ -31,7 +31,6 @@ export interface Account {
     'l1_address': string;
     'cancel_all_time': number;
     'total_order_count': number;
-    'total_isolated_order_count': number;
     'pending_order_count': number;
     'available_balance': string;
     'status': number;
@@ -42,11 +41,19 @@ export interface AccountApiKeys {
     'message'?: string;
     'api_keys': Array<ApiKey>;
 }
+export interface AccountAsset {
+    'symbol': string;
+    'asset_id': number;
+    'balance': string;
+    'locked_balance': string;
+}
 export interface AccountLimits {
     'code': number;
     'message'?: string;
     'max_llp_percentage': number;
+    'max_llp_amount': string;
     'user_tier': string;
+    'can_create_public_pool': boolean;
 }
 export interface AccountMarginStats {
     'collateral': string;
@@ -137,6 +144,7 @@ export interface Announcement {
     'title': string;
     'content': string;
     'created_at': number;
+    'expired_at': number;
 }
 export interface Announcements {
     'code': number;
@@ -148,6 +156,30 @@ export interface ApiKey {
     'api_key_index': number;
     'nonce': number;
     'public_key': string;
+}
+export interface Asset {
+    'asset_id': number;
+    'symbol': string;
+    'l1_decimals': number;
+    'decimals': number;
+    'min_transfer_amount': string;
+    'min_withdrawal_amount': string;
+    'margin_mode': AssetMarginModeEnum;
+    'index_price': string;
+    'l1_address': string;
+}
+
+export const AssetMarginModeEnum = {
+    Enabled: 'enabled',
+    Disabled: 'disabled'
+} as const;
+
+export type AssetMarginModeEnum = typeof AssetMarginModeEnum[keyof typeof AssetMarginModeEnum];
+
+export interface AssetDetails {
+    'code': number;
+    'message'?: string;
+    'asset_details': Array<Asset>;
 }
 export interface Block {
     'commitment': string;
@@ -170,6 +202,38 @@ export interface Blocks {
     'total': number;
     'blocks': Array<Block>;
 }
+export interface Bridge {
+    'id': number;
+    'version': BridgeVersionEnum;
+    'source': string;
+    'source_chain_id': string;
+    'fast_bridge_tx_hash': string;
+    'batch_claim_tx_hash': string;
+    'cctp_burn_tx_hash': string;
+    'amount': string;
+    'intent_address': string;
+    'status': BridgeStatusEnum;
+    'step': string;
+    'description': string;
+    'created_at': number;
+    'updated_at': number;
+    'is_external_deposit': boolean;
+}
+
+export const BridgeVersionEnum = {
+    NUMBER_1: 1,
+    NUMBER_2: 2
+} as const;
+
+export type BridgeVersionEnum = typeof BridgeVersionEnum[keyof typeof BridgeVersionEnum];
+export const BridgeStatusEnum = {
+    Pending: 'pending',
+    Bridging: 'bridging',
+    Completed: 'completed'
+} as const;
+
+export type BridgeStatusEnum = typeof BridgeStatusEnum[keyof typeof BridgeStatusEnum];
+
 export interface BridgeSupportedNetwork {
     'name': string;
     'chain_id': string;
@@ -181,6 +245,10 @@ export interface Candlestick {
     'high': number;
     'low': number;
     'close': number;
+    'open_raw': number;
+    'high_raw': number;
+    'low_raw': number;
+    'close_raw': number;
     'volume0': number;
     'volume1': number;
     'last_trade_id': number;
@@ -215,6 +283,7 @@ export interface DepositHistory {
 }
 export interface DepositHistoryItem {
     'id': string;
+    'asset_id': number;
     'amount': string;
     'timestamp': number;
     'status': DepositHistoryItemStatusEnum;
@@ -238,7 +307,6 @@ export interface DetailedAccount {
     'l1_address': string;
     'cancel_all_time': number;
     'total_order_count': number;
-    'total_isolated_order_count': number;
     'pending_order_count': number;
     'available_balance': string;
     'status': number;
@@ -255,6 +323,7 @@ export interface DetailedAccount {
      */
     'referral_points_percentage': string;
     'positions': Array<AccountPosition>;
+    'assets': Array<AccountAsset>;
     'total_asset_value': string;
     'cross_asset_value': string;
     'pool_info': PublicPoolInfo;
@@ -272,6 +341,10 @@ export interface DetailedCandlestick {
     'high': number;
     'low': number;
     'close': number;
+    'open_raw': number;
+    'high_raw': number;
+    'low_raw': number;
+    'close_raw': number;
     'volume0': number;
     'volume1': number;
     'last_trade_id': number;
@@ -295,6 +368,7 @@ export interface EnrichedTx {
     'executed_at': number;
     'sequence_index': number;
     'parent_hash': string;
+    'api_key_index': number;
     'committed_at': number;
     'verified_at': number;
 }
@@ -388,20 +462,12 @@ export interface LiquidationInfos {
     'liquidations': Array<Liquidation>;
     'next_cursor'?: string;
 }
-export interface MarketInfo {
-    'market_id': number;
-    'index_price': string;
-    'mark_price': string;
-    'open_interest': string;
-    'last_trade_price': string;
-    'current_funding_rate': string;
-    'funding_rate': string;
-    'funding_timestamp': number;
-    'daily_base_token_volume': number;
-    'daily_quote_token_volume': number;
-    'daily_price_low': number;
-    'daily_price_high': number;
-    'daily_price_change': number;
+export interface MarketConfig {
+    'market_margin_mode': number;
+    'insurance_fund_account_index': number;
+    'liquidation_mode': number;
+    'force_reduce_only': boolean;
+    'trading_hours': string;
 }
 export interface NextNonce {
     'code': number;
@@ -443,6 +509,8 @@ export interface Order {
     'to_cancel_order_id_0': string;
     'block_height': number;
     'timestamp': number;
+    'created_at': number;
+    'updated_at': number;
 }
 
 export const OrderTypeEnum = {
@@ -482,7 +550,8 @@ export const OrderStatusEnum = {
     CanceledExpired: 'canceled-expired',
     CanceledOco: 'canceled-oco',
     CanceledChild: 'canceled-child',
-    CanceledLiquidation: 'canceled-liquidation'
+    CanceledLiquidation: 'canceled-liquidation',
+    CanceledInvalidBalance: 'canceled-invalid-balance'
 } as const;
 
 export type OrderStatusEnum = typeof OrderStatusEnum[keyof typeof OrderStatusEnum];
@@ -499,20 +568,29 @@ export type OrderTriggerStatusEnum = typeof OrderTriggerStatusEnum[keyof typeof 
 export interface OrderBook {
     'symbol': string;
     'market_id': number;
+    'market_type': OrderBookMarketTypeEnum;
+    'base_asset_id': number;
+    'quote_asset_id': number;
     'status': OrderBookStatusEnum;
     'taker_fee': string;
     'maker_fee': string;
     'liquidation_fee': string;
     'min_base_amount': string;
     'min_quote_amount': string;
+    'order_quote_limit': string;
     'supported_size_decimals': number;
     'supported_price_decimals': number;
     'supported_quote_decimals': number;
 }
 
+export const OrderBookMarketTypeEnum = {
+    Perp: 'perp',
+    Spot: 'spot'
+} as const;
+
+export type OrderBookMarketTypeEnum = typeof OrderBookMarketTypeEnum[keyof typeof OrderBookMarketTypeEnum];
 export const OrderBookStatusEnum = {
     Inactive: 'inactive',
-    Frozen: 'frozen',
     Active: 'active'
 } as const;
 
@@ -524,49 +602,13 @@ export interface OrderBookDepth {
     'asks': Array<PriceLevel>;
     'bids': Array<PriceLevel>;
     'offset': number;
+    'nonce': number;
 }
-export interface OrderBookDetail {
-    'symbol': string;
-    'market_id': number;
-    'status': OrderBookDetailStatusEnum;
-    'taker_fee': string;
-    'maker_fee': string;
-    'liquidation_fee': string;
-    'min_base_amount': string;
-    'min_quote_amount': string;
-    'supported_size_decimals': number;
-    'supported_price_decimals': number;
-    'supported_quote_decimals': number;
-    'size_decimals': number;
-    'price_decimals': number;
-    'quote_multiplier': number;
-    'default_initial_margin_fraction': number;
-    'min_initial_margin_fraction': number;
-    'maintenance_margin_fraction': number;
-    'closeout_margin_fraction': number;
-    'last_trade_price': number;
-    'daily_trades_count': number;
-    'daily_base_token_volume': number;
-    'daily_quote_token_volume': number;
-    'daily_price_low': number;
-    'daily_price_high': number;
-    'daily_price_change': number;
-    'open_interest': number;
-    'daily_chart': { [key: string]: number; };
-}
-
-export const OrderBookDetailStatusEnum = {
-    Inactive: 'inactive',
-    Frozen: 'frozen',
-    Active: 'active'
-} as const;
-
-export type OrderBookDetailStatusEnum = typeof OrderBookDetailStatusEnum[keyof typeof OrderBookDetailStatusEnum];
-
 export interface OrderBookDetails {
     'code': number;
     'message'?: string;
-    'order_book_details': Array<OrderBookDetail>;
+    'order_book_details': Array<PerpsOrderBookDetail>;
+    'spot_order_book_details': Array<SpotOrderBookDetail>;
 }
 export interface OrderBookOrders {
     'code': number;
@@ -595,11 +637,81 @@ export interface Orders {
     'next_cursor'?: string;
     'orders': Array<Order>;
 }
+export interface PerpsMarketStats {
+    'symbol': string;
+    'market_id': number;
+    'index_price': string;
+    'mark_price': string;
+    'open_interest': string;
+    'open_interest_limit': string;
+    'funding_clamp_small': string;
+    'funding_clamp_big': string;
+    'last_trade_price': string;
+    'current_funding_rate': string;
+    'funding_rate': string;
+    'funding_timestamp': number;
+    'daily_base_token_volume': number;
+    'daily_quote_token_volume': number;
+    'daily_price_low': number;
+    'daily_price_high': number;
+    'daily_price_change': number;
+}
+export interface PerpsOrderBookDetail {
+    'symbol': string;
+    'market_id': number;
+    'market_type': PerpsOrderBookDetailMarketTypeEnum;
+    'base_asset_id': number;
+    'quote_asset_id': number;
+    'status': PerpsOrderBookDetailStatusEnum;
+    'taker_fee': string;
+    'maker_fee': string;
+    'liquidation_fee': string;
+    'min_base_amount': string;
+    'min_quote_amount': string;
+    'order_quote_limit': string;
+    'supported_size_decimals': number;
+    'supported_price_decimals': number;
+    'supported_quote_decimals': number;
+    'size_decimals': number;
+    'price_decimals': number;
+    'quote_multiplier': number;
+    'default_initial_margin_fraction': number;
+    'min_initial_margin_fraction': number;
+    'maintenance_margin_fraction': number;
+    'closeout_margin_fraction': number;
+    'last_trade_price': number;
+    'daily_trades_count': number;
+    'daily_base_token_volume': number;
+    'daily_quote_token_volume': number;
+    'daily_price_low': number;
+    'daily_price_high': number;
+    'daily_price_change': number;
+    'open_interest': number;
+    'daily_chart': { [key: string]: number; };
+    'market_config': MarketConfig;
+}
+
+export const PerpsOrderBookDetailMarketTypeEnum = {
+    Perp: 'perp',
+    Spot: 'spot'
+} as const;
+
+export type PerpsOrderBookDetailMarketTypeEnum = typeof PerpsOrderBookDetailMarketTypeEnum[keyof typeof PerpsOrderBookDetailMarketTypeEnum];
+export const PerpsOrderBookDetailStatusEnum = {
+    Inactive: 'inactive',
+    Active: 'active'
+} as const;
+
+export type PerpsOrderBookDetailStatusEnum = typeof PerpsOrderBookDetailStatusEnum[keyof typeof PerpsOrderBookDetailStatusEnum];
+
 export interface PnLEntry {
     'timestamp': number;
     'trade_pnl': number;
+    'trade_spot_pnl': number;
     'inflow': number;
     'outflow': number;
+    'spot_outflow': number;
+    'spot_inflow': number;
     'pool_pnl': number;
     'pool_inflow': number;
     'pool_outflow': number;
@@ -632,35 +744,6 @@ export interface PriceLevel {
     'price': string;
     'size': string;
 }
-export interface PublicPool {
-    'code': number;
-    'message'?: string;
-    'account_type': number;
-    'index': number;
-    'l1_address': string;
-    'cancel_all_time': number;
-    'total_order_count': number;
-    'total_isolated_order_count': number;
-    'pending_order_count': number;
-    'available_balance': string;
-    'status': number;
-    'collateral': string;
-    'account_index': number;
-    'name': string;
-    'description': string;
-    /**
-     *  Remove After FE uses L1 meta endpoint
-     */
-    'can_invite': boolean;
-    /**
-     *  Remove After FE uses L1 meta endpoint
-     */
-    'referral_points_percentage': string;
-    'total_asset_value': string;
-    'cross_asset_value': string;
-    'pool_info': PublicPoolInfo;
-    'account_share'?: PublicPoolShare;
-}
 export interface PublicPoolInfo {
     'status': number;
     'operator_fee': string;
@@ -668,6 +751,7 @@ export interface PublicPoolInfo {
     'total_shares': number;
     'operator_shares': number;
     'annual_percentage_yield': number;
+    'sharpe_ratio': number;
     'daily_returns': Array<DailyReturn>;
     'share_prices': Array<SharePrice>;
 }
@@ -675,10 +759,13 @@ export interface PublicPoolMetadata {
     'code': number;
     'message'?: string;
     'account_index': number;
+    'created_at': number;
+    'master_account_index': number;
     'account_type': number;
     'name': string;
     'l1_address': string;
     'annual_percentage_yield': number;
+    'sharpe_ratio': number;
     'status': number;
     'operator_fee': string;
     'total_asset_value': string;
@@ -689,12 +776,6 @@ export interface PublicPoolShare {
     'public_pool_index': number;
     'shares_amount': number;
     'entry_usdc': string;
-}
-export interface PublicPools {
-    'code': number;
-    'message'?: string;
-    'total': number;
-    'public_pools': Array<PublicPool>;
 }
 export interface ReferralPointEntry {
     'l1_address': string;
@@ -827,6 +908,9 @@ export const ReqGetAccountTxsByEnum = {
 
 export type ReqGetAccountTxsByEnum = typeof ReqGetAccountTxsByEnum[keyof typeof ReqGetAccountTxsByEnum];
 
+export interface ReqGetAssetDetails {
+    'asset_id'?: number;
+}
 export interface ReqGetBlock {
     'by': ReqGetBlockByEnum;
     'value': string;
@@ -851,6 +935,9 @@ export const ReqGetBlockTxsByEnum = {
 
 export type ReqGetBlockTxsByEnum = typeof ReqGetBlockTxsByEnum[keyof typeof ReqGetBlockTxsByEnum];
 
+export interface ReqGetBridgesByL1Addr {
+    'l1_address': string;
+}
 export interface ReqGetByAccount {
     'by': ReqGetByAccountByEnum;
     'value': string;
@@ -875,9 +962,12 @@ export const ReqGetCandlesticksResolutionEnum = {
     _1m: '1m',
     _5m: '5m',
     _15m: '15m',
+    _30m: '30m',
     _1h: '1h',
     _4h: '4h',
-    _1d: '1d'
+    _12h: '12h',
+    _1d: '1d',
+    _1w: '1w'
 } as const;
 
 export type ReqGetCandlesticksResolutionEnum = typeof ReqGetCandlesticksResolutionEnum[keyof typeof ReqGetCandlesticksResolutionEnum];
@@ -952,14 +1042,34 @@ export interface ReqGetNextNonce {
 }
 export interface ReqGetOrderBookDetails {
     'market_id'?: number;
+    'filter'?: ReqGetOrderBookDetailsFilterEnum;
 }
+
+export const ReqGetOrderBookDetailsFilterEnum = {
+    All: 'all',
+    Spot: 'spot',
+    Perp: 'perp'
+} as const;
+
+export type ReqGetOrderBookDetailsFilterEnum = typeof ReqGetOrderBookDetailsFilterEnum[keyof typeof ReqGetOrderBookDetailsFilterEnum];
+
 export interface ReqGetOrderBookOrders {
     'market_id': number;
     'limit': number;
 }
 export interface ReqGetOrderBooks {
     'market_id'?: number;
+    'filter'?: ReqGetOrderBooksFilterEnum;
 }
+
+export const ReqGetOrderBooksFilterEnum = {
+    All: 'all',
+    Spot: 'spot',
+    Perp: 'perp'
+} as const;
+
+export type ReqGetOrderBooksFilterEnum = typeof ReqGetOrderBooksFilterEnum[keyof typeof ReqGetOrderBooksFilterEnum];
+
 export interface ReqGetPositionFunding {
     'auth'?: string;
     'account_index': number;
@@ -976,23 +1086,6 @@ export const ReqGetPositionFundingSideEnum = {
 } as const;
 
 export type ReqGetPositionFundingSideEnum = typeof ReqGetPositionFundingSideEnum[keyof typeof ReqGetPositionFundingSideEnum];
-
-export interface ReqGetPublicPools {
-    'auth'?: string;
-    'filter'?: ReqGetPublicPoolsFilterEnum;
-    'index': number;
-    'limit': number;
-    'account_index'?: number;
-}
-
-export const ReqGetPublicPoolsFilterEnum = {
-    All: 'all',
-    User: 'user',
-    Protocol: 'protocol',
-    AccountIndex: 'account_index'
-} as const;
-
-export type ReqGetPublicPoolsFilterEnum = typeof ReqGetPublicPoolsFilterEnum[keyof typeof ReqGetPublicPoolsFilterEnum];
 
 export interface ReqGetPublicPoolsMetadata {
     'auth'?: string;
@@ -1053,7 +1146,10 @@ export interface ReqGetTrades {
     'cursor'?: string;
     'from'?: number;
     'ask_filter'?: number;
+    'role'?: ReqGetTradesRoleEnum;
+    'type'?: ReqGetTradesTypeEnum;
     'limit': number;
+    'aggregate'?: boolean;
 }
 
 export const ReqGetTradesSortByEnum = {
@@ -1068,6 +1164,22 @@ export const ReqGetTradesSortDirEnum = {
 } as const;
 
 export type ReqGetTradesSortDirEnum = typeof ReqGetTradesSortDirEnum[keyof typeof ReqGetTradesSortDirEnum];
+export const ReqGetTradesRoleEnum = {
+    All: 'all',
+    Maker: 'maker',
+    Taker: 'taker'
+} as const;
+
+export type ReqGetTradesRoleEnum = typeof ReqGetTradesRoleEnum[keyof typeof ReqGetTradesRoleEnum];
+export const ReqGetTradesTypeEnum = {
+    All: 'all',
+    Trade: 'trade',
+    Liquidation: 'liquidation',
+    Deleverage: 'deleverage',
+    MarketSettlement: 'market-settlement'
+} as const;
+
+export type ReqGetTradesTypeEnum = typeof ReqGetTradesTypeEnum[keyof typeof ReqGetTradesTypeEnum];
 
 export interface ReqGetTransferFeeInfo {
     'auth'?: string;
@@ -1116,10 +1228,20 @@ export interface RespChangeAccountTier {
     'code': number;
     'message'?: string;
 }
+export interface RespGetBridgesByL1Addr {
+    'code': number;
+    'message'?: string;
+    'bridges': Array<Bridge>;
+}
 export interface RespGetFastBridgeInfo {
     'code': number;
     'message'?: string;
     'fast_bridge_limit': string;
+}
+export interface RespGetIsNextBridgeFast {
+    'code': number;
+    'message'?: string;
+    'is_next_bridge_fast': boolean;
 }
 export interface RespPublicPoolsMetadata {
     'code': number;
@@ -1131,12 +1253,24 @@ export interface RespSendTx {
     'message'?: string;
     'tx_hash': string;
     'predicted_execution_time_ms': number;
+    'volume_quota_remaining': number;
 }
 export interface RespSendTxBatch {
     'code': number;
     'message'?: string;
     'tx_hash': Array<string>;
     'predicted_execution_time_ms': number;
+    'volume_quota_remaining': number;
+}
+export interface RespUpdateKickback {
+    'code': number;
+    'message'?: string;
+    'success': boolean;
+}
+export interface RespUpdateReferralCode {
+    'code': number;
+    'message'?: string;
+    'success': boolean;
 }
 export interface RespWithdrawalDelay {
     'seconds': number;
@@ -1170,6 +1304,59 @@ export interface SimpleOrder {
     'price': string;
     'order_expiry': number;
 }
+export interface SpotMarketStats {
+    'symbol': string;
+    'market_id': number;
+    'index_price': string;
+    'mid_price': string;
+    'last_trade_price': string;
+    'daily_base_token_volume': number;
+    'daily_quote_token_volume': number;
+    'daily_price_low': number;
+    'daily_price_high': number;
+    'daily_price_change': number;
+}
+export interface SpotOrderBookDetail {
+    'symbol': string;
+    'market_id': number;
+    'market_type': SpotOrderBookDetailMarketTypeEnum;
+    'base_asset_id': number;
+    'quote_asset_id': number;
+    'status': SpotOrderBookDetailStatusEnum;
+    'taker_fee': string;
+    'maker_fee': string;
+    'liquidation_fee': string;
+    'min_base_amount': string;
+    'min_quote_amount': string;
+    'order_quote_limit': string;
+    'supported_size_decimals': number;
+    'supported_price_decimals': number;
+    'supported_quote_decimals': number;
+    'size_decimals': number;
+    'price_decimals': number;
+    'last_trade_price': number;
+    'daily_trades_count': number;
+    'daily_base_token_volume': number;
+    'daily_quote_token_volume': number;
+    'daily_price_low': number;
+    'daily_price_high': number;
+    'daily_price_change': number;
+    'daily_chart': { [key: string]: number; };
+}
+
+export const SpotOrderBookDetailMarketTypeEnum = {
+    Perp: 'perp',
+    Spot: 'spot'
+} as const;
+
+export type SpotOrderBookDetailMarketTypeEnum = typeof SpotOrderBookDetailMarketTypeEnum[keyof typeof SpotOrderBookDetailMarketTypeEnum];
+export const SpotOrderBookDetailStatusEnum = {
+    Inactive: 'inactive',
+    Active: 'active'
+} as const;
+
+export type SpotOrderBookDetailStatusEnum = typeof SpotOrderBookDetailStatusEnum[keyof typeof SpotOrderBookDetailStatusEnum];
+
 export interface Status {
     'status': number;
     'network_id': number;
@@ -1196,6 +1383,8 @@ export interface Trade {
     'usd_amount': string;
     'ask_id': number;
     'bid_id': number;
+    'ask_client_id': number;
+    'bid_client_id': number;
     'ask_account_id': number;
     'bid_account_id': number;
     'is_maker_ask': boolean;
@@ -1216,7 +1405,8 @@ export interface Trade {
 export const TradeTypeEnum = {
     Trade: 'trade',
     Liquidation: 'liquidation',
-    Deleverage: 'deleverage'
+    Deleverage: 'deleverage',
+    MarketSettlement: 'market-settlement'
 } as const;
 
 export type TradeTypeEnum = typeof TradeTypeEnum[keyof typeof TradeTypeEnum];
@@ -1240,6 +1430,7 @@ export interface TransferHistory {
 }
 export interface TransferHistoryItem {
     'id': string;
+    'asset_id': number;
     'amount': string;
     'timestamp': number;
     'type': TransferHistoryItemTypeEnum;
@@ -1247,15 +1438,34 @@ export interface TransferHistoryItem {
     'to_l1_address': string;
     'from_account_index': number;
     'to_account_index': number;
+    'from_route': TransferHistoryItemFromRouteEnum;
+    'to_route': TransferHistoryItemToRouteEnum;
     'tx_hash': string;
 }
 
 export const TransferHistoryItemTypeEnum = {
     L2TransferInflow: 'L2TransferInflow',
-    L2TransferOutflow: 'L2TransferOutflow'
+    L2TransferOutflow: 'L2TransferOutflow',
+    L2BurnSharesInflow: 'L2BurnSharesInflow',
+    L2BurnSharesOutflow: 'L2BurnSharesOutflow',
+    L2MintSharesInflow: 'L2MintSharesInflow',
+    L2MintSharesOutflow: 'L2MintSharesOutflow',
+    L2SelfTransfer: 'L2SelfTransfer'
 } as const;
 
 export type TransferHistoryItemTypeEnum = typeof TransferHistoryItemTypeEnum[keyof typeof TransferHistoryItemTypeEnum];
+export const TransferHistoryItemFromRouteEnum = {
+    Spot: 'spot',
+    Perps: 'perps'
+} as const;
+
+export type TransferHistoryItemFromRouteEnum = typeof TransferHistoryItemFromRouteEnum[keyof typeof TransferHistoryItemFromRouteEnum];
+export const TransferHistoryItemToRouteEnum = {
+    Spot: 'spot',
+    Perps: 'perps'
+} as const;
+
+export type TransferHistoryItemToRouteEnum = typeof TransferHistoryItemToRouteEnum[keyof typeof TransferHistoryItemToRouteEnum];
 
 export interface Tx {
     'hash': string;
@@ -1273,6 +1483,7 @@ export interface Tx {
     'executed_at': number;
     'sequence_index': number;
     'parent_hash': string;
+    'api_key_index': number;
 }
 export interface TxHash {
     'code': number;
@@ -1301,6 +1512,7 @@ export interface WithdrawHistory {
 }
 export interface WithdrawHistoryItem {
     'id': string;
+    'asset_id': number;
     'amount': string;
     'timestamp': number;
     'status': WithdrawHistoryItemStatusEnum;
@@ -1876,69 +2088,6 @@ export const AccountApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Get public pools
-         * @summary publicPools
-         * @param {number} index 
-         * @param {number} limit 
-         * @param {string} [authorization] 
-         * @param {string} [auth] 
-         * @param {PublicPoolsFilterEnum} [filter] 
-         * @param {number} [accountIndex] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        publicPools: async (index: number, limit: number, authorization?: string, auth?: string, filter?: PublicPoolsFilterEnum, accountIndex?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'index' is not null or undefined
-            assertParamExists('publicPools', 'index', index)
-            // verify required parameter 'limit' is not null or undefined
-            assertParamExists('publicPools', 'limit', limit)
-            const localVarPath = `/api/v1/publicPools`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            if (auth !== undefined) {
-                localVarQueryParameter['auth'] = auth;
-            }
-
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter;
-            }
-
-            if (index !== undefined) {
-                localVarQueryParameter['index'] = index;
-            }
-
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit;
-            }
-
-            if (accountIndex !== undefined) {
-                localVarQueryParameter['account_index'] = accountIndex;
-            }
-
-
-    
-            if (authorization != null) {
-                localVarHeaderParameter['authorization'] = String(authorization);
-            }
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * Get public pools metadata
          * @summary publicPoolsMetadata
          * @param {number} index 
@@ -2172,24 +2321,6 @@ export const AccountApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Get public pools
-         * @summary publicPools
-         * @param {number} index 
-         * @param {number} limit 
-         * @param {string} [authorization] 
-         * @param {string} [auth] 
-         * @param {PublicPoolsFilterEnum} [filter] 
-         * @param {number} [accountIndex] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async publicPools(index: number, limit: number, authorization?: string, auth?: string, filter?: PublicPoolsFilterEnum, accountIndex?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PublicPools>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.publicPools(index, limit, authorization, auth, filter, accountIndex, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['AccountApi.publicPools']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
          * Get public pools metadata
          * @summary publicPoolsMetadata
          * @param {number} index 
@@ -2346,21 +2477,6 @@ export const AccountApiFactory = function (configuration?: Configuration, basePa
          */
         positionFunding(accountIndex: number, limit: number, authorization?: string, auth?: string, marketId?: number, cursor?: string, side?: PositionFundingSideEnum, options?: RawAxiosRequestConfig): AxiosPromise<PositionFundings> {
             return localVarFp.positionFunding(accountIndex, limit, authorization, auth, marketId, cursor, side, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Get public pools
-         * @summary publicPools
-         * @param {number} index 
-         * @param {number} limit 
-         * @param {string} [authorization] 
-         * @param {string} [auth] 
-         * @param {PublicPoolsFilterEnum} [filter] 
-         * @param {number} [accountIndex] 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        publicPools(index: number, limit: number, authorization?: string, auth?: string, filter?: PublicPoolsFilterEnum, accountIndex?: number, options?: RawAxiosRequestConfig): AxiosPromise<PublicPools> {
-            return localVarFp.publicPools(index, limit, authorization, auth, filter, accountIndex, options).then((request) => request(axios, basePath));
         },
         /**
          * Get public pools metadata
@@ -2526,22 +2642,6 @@ export class AccountApi extends BaseAPI {
     }
 
     /**
-     * Get public pools
-     * @summary publicPools
-     * @param {number} index 
-     * @param {number} limit 
-     * @param {string} [authorization] 
-     * @param {string} [auth] 
-     * @param {PublicPoolsFilterEnum} [filter] 
-     * @param {number} [accountIndex] 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     */
-    public publicPools(index: number, limit: number, authorization?: string, auth?: string, filter?: PublicPoolsFilterEnum, accountIndex?: number, options?: RawAxiosRequestConfig) {
-        return AccountApiFp(this.configuration).publicPools(index, limit, authorization, auth, filter, accountIndex, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
      * Get public pools metadata
      * @summary publicPoolsMetadata
      * @param {number} index 
@@ -2587,13 +2687,6 @@ export const PositionFundingSideEnum = {
     All: 'all'
 } as const;
 export type PositionFundingSideEnum = typeof PositionFundingSideEnum[keyof typeof PositionFundingSideEnum];
-export const PublicPoolsFilterEnum = {
-    All: 'all',
-    User: 'user',
-    Protocol: 'protocol',
-    AccountIndex: 'account_index'
-} as const;
-export type PublicPoolsFilterEnum = typeof PublicPoolsFilterEnum[keyof typeof PublicPoolsFilterEnum];
 export const PublicPoolsMetadataFilterEnum = {
     All: 'all',
     User: 'user',
@@ -2975,6 +3068,80 @@ export type BlocksSortEnum = typeof BlocksSortEnum[keyof typeof BlocksSortEnum];
 export const BridgeApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Get bridges for given l1 address
+         * @summary bridges
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bridges: async (l1Address: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'l1Address' is not null or undefined
+            assertParamExists('bridges', 'l1Address', l1Address)
+            const localVarPath = `/api/v1/bridges`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (l1Address !== undefined) {
+                localVarQueryParameter['l1_address'] = l1Address;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Get if next bridge is fast
+         * @summary bridges_isNextBridgeFast
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bridgesIsNextBridgeFast: async (l1Address: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'l1Address' is not null or undefined
+            assertParamExists('bridgesIsNextBridgeFast', 'l1Address', l1Address)
+            const localVarPath = `/api/v1/bridges/isNextBridgeFast`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (l1Address !== undefined) {
+                localVarQueryParameter['l1_address'] = l1Address;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Get fast bridge info
          * @summary fastbridge_info
          * @param {*} [options] Override http request option.
@@ -3014,6 +3181,32 @@ export const BridgeApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = BridgeApiAxiosParamCreator(configuration)
     return {
         /**
+         * Get bridges for given l1 address
+         * @summary bridges
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async bridges(l1Address: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RespGetBridgesByL1Addr>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.bridges(l1Address, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BridgeApi.bridges']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Get if next bridge is fast
+         * @summary bridges_isNextBridgeFast
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async bridgesIsNextBridgeFast(l1Address: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RespGetIsNextBridgeFast>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.bridgesIsNextBridgeFast(l1Address, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BridgeApi.bridgesIsNextBridgeFast']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Get fast bridge info
          * @summary fastbridge_info
          * @param {*} [options] Override http request option.
@@ -3035,6 +3228,26 @@ export const BridgeApiFactory = function (configuration?: Configuration, basePat
     const localVarFp = BridgeApiFp(configuration)
     return {
         /**
+         * Get bridges for given l1 address
+         * @summary bridges
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bridges(l1Address: string, options?: RawAxiosRequestConfig): AxiosPromise<RespGetBridgesByL1Addr> {
+            return localVarFp.bridges(l1Address, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Get if next bridge is fast
+         * @summary bridges_isNextBridgeFast
+         * @param {string} l1Address 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bridgesIsNextBridgeFast(l1Address: string, options?: RawAxiosRequestConfig): AxiosPromise<RespGetIsNextBridgeFast> {
+            return localVarFp.bridgesIsNextBridgeFast(l1Address, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Get fast bridge info
          * @summary fastbridge_info
          * @param {*} [options] Override http request option.
@@ -3050,6 +3263,28 @@ export const BridgeApiFactory = function (configuration?: Configuration, basePat
  * BridgeApi - object-oriented interface
  */
 export class BridgeApi extends BaseAPI {
+    /**
+     * Get bridges for given l1 address
+     * @summary bridges
+     * @param {string} l1Address 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public bridges(l1Address: string, options?: RawAxiosRequestConfig) {
+        return BridgeApiFp(this.configuration).bridges(l1Address, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Get if next bridge is fast
+     * @summary bridges_isNextBridgeFast
+     * @param {string} l1Address 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public bridgesIsNextBridgeFast(l1Address: string, options?: RawAxiosRequestConfig) {
+        return BridgeApiFp(this.configuration).bridgesIsNextBridgeFast(l1Address, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Get fast bridge info
      * @summary fastbridge_info
@@ -3328,9 +3563,12 @@ export const CandlesticksResolutionEnum = {
     _1m: '1m',
     _5m: '5m',
     _15m: '15m',
+    _30m: '30m',
     _1h: '1h',
     _4h: '4h',
-    _1d: '1d'
+    _12h: '12h',
+    _1d: '1d',
+    _1w: '1w'
 } as const;
 export type CandlesticksResolutionEnum = typeof CandlesticksResolutionEnum[keyof typeof CandlesticksResolutionEnum];
 export const FundingsResolutionEnum = {
@@ -3943,6 +4181,41 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Get asset details
+         * @summary assetDetails
+         * @param {number} [assetId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assetDetails: async (assetId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/assetDetails`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (assetId !== undefined) {
+                localVarQueryParameter['asset_id'] = assetId;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Get exchange stats
          * @summary exchangeStats
          * @param {*} [options] Override http request option.
@@ -3976,10 +4249,11 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
          * Get order books metadata
          * @summary orderBookDetails
          * @param {number} [marketId] 
+         * @param {OrderBookDetailsFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        orderBookDetails: async (marketId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        orderBookDetails: async (marketId?: number, filter?: OrderBookDetailsFilterEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/orderBookDetails`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -3994,6 +4268,10 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
 
             if (marketId !== undefined) {
                 localVarQueryParameter['market_id'] = marketId;
+            }
+
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter;
             }
 
 
@@ -4055,10 +4333,11 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
          * Get order books metadata.<hr>**Response Description:**<br><br>1) **Taker and maker fees** are in percentage.<br>2) **Min base amount:** The amount of base token that can be traded in a single order.<br>3) **Min quote amount:** The amount of quote token that can be traded in a single order.<br>4) **Supported size decimals:** The number of decimal places that can be used for the size of the order.<br>5) **Supported price decimals:** The number of decimal places that can be used for the price of the order.<br>6) **Supported quote decimals:** Size Decimals + Quote Decimals.
          * @summary orderBooks
          * @param {number} [marketId] 
+         * @param {OrderBooksFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        orderBooks: async (marketId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        orderBooks: async (marketId?: number, filter?: OrderBooksFilterEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/orderBooks`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -4073,6 +4352,10 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
 
             if (marketId !== undefined) {
                 localVarQueryParameter['market_id'] = marketId;
+            }
+
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter;
             }
 
 
@@ -4144,10 +4427,13 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
          * @param {string} [cursor] 
          * @param {number} [from] 
          * @param {number} [askFilter] 
+         * @param {TradesRoleEnum} [role] 
+         * @param {TradesTypeEnum} [type] 
+         * @param {boolean} [aggregate] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trades: async (sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        trades: async (sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, role?: TradesRoleEnum, type?: TradesTypeEnum, aggregate?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'sortBy' is not null or undefined
             assertParamExists('trades', 'sortBy', sortBy)
             // verify required parameter 'limit' is not null or undefined
@@ -4200,8 +4486,20 @@ export const OrderApiAxiosParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['ask_filter'] = askFilter;
             }
 
+            if (role !== undefined) {
+                localVarQueryParameter['role'] = role;
+            }
+
+            if (type !== undefined) {
+                localVarQueryParameter['type'] = type;
+            }
+
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit;
+            }
+
+            if (aggregate !== undefined) {
+                localVarQueryParameter['aggregate'] = aggregate;
             }
 
 
@@ -4281,6 +4579,19 @@ export const OrderApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Get asset details
+         * @summary assetDetails
+         * @param {number} [assetId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async assetDetails(assetId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AssetDetails>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.assetDetails(assetId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OrderApi.assetDetails']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Get exchange stats
          * @summary exchangeStats
          * @param {*} [options] Override http request option.
@@ -4296,11 +4607,12 @@ export const OrderApiFp = function(configuration?: Configuration) {
          * Get order books metadata
          * @summary orderBookDetails
          * @param {number} [marketId] 
+         * @param {OrderBookDetailsFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async orderBookDetails(marketId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OrderBookDetails>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.orderBookDetails(marketId, options);
+        async orderBookDetails(marketId?: number, filter?: OrderBookDetailsFilterEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OrderBookDetails>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.orderBookDetails(marketId, filter, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OrderApi.orderBookDetails']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -4323,11 +4635,12 @@ export const OrderApiFp = function(configuration?: Configuration) {
          * Get order books metadata.<hr>**Response Description:**<br><br>1) **Taker and maker fees** are in percentage.<br>2) **Min base amount:** The amount of base token that can be traded in a single order.<br>3) **Min quote amount:** The amount of quote token that can be traded in a single order.<br>4) **Supported size decimals:** The number of decimal places that can be used for the size of the order.<br>5) **Supported price decimals:** The number of decimal places that can be used for the price of the order.<br>6) **Supported quote decimals:** Size Decimals + Quote Decimals.
          * @summary orderBooks
          * @param {number} [marketId] 
+         * @param {OrderBooksFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async orderBooks(marketId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OrderBooks>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.orderBooks(marketId, options);
+        async orderBooks(marketId?: number, filter?: OrderBooksFilterEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OrderBooks>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.orderBooks(marketId, filter, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OrderApi.orderBooks']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -4360,11 +4673,14 @@ export const OrderApiFp = function(configuration?: Configuration) {
          * @param {string} [cursor] 
          * @param {number} [from] 
          * @param {number} [askFilter] 
+         * @param {TradesRoleEnum} [role] 
+         * @param {TradesTypeEnum} [type] 
+         * @param {boolean} [aggregate] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Trades>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, options);
+        async trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, role?: TradesRoleEnum, type?: TradesTypeEnum, aggregate?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Trades>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, role, type, aggregate, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OrderApi.trades']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -4423,6 +4739,16 @@ export const OrderApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.accountInactiveOrders(accountIndex, limit, authorization, auth, marketId, askFilter, betweenTimestamps, cursor, options).then((request) => request(axios, basePath));
         },
         /**
+         * Get asset details
+         * @summary assetDetails
+         * @param {number} [assetId] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        assetDetails(assetId?: number, options?: RawAxiosRequestConfig): AxiosPromise<AssetDetails> {
+            return localVarFp.assetDetails(assetId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Get exchange stats
          * @summary exchangeStats
          * @param {*} [options] Override http request option.
@@ -4435,11 +4761,12 @@ export const OrderApiFactory = function (configuration?: Configuration, basePath
          * Get order books metadata
          * @summary orderBookDetails
          * @param {number} [marketId] 
+         * @param {OrderBookDetailsFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        orderBookDetails(marketId?: number, options?: RawAxiosRequestConfig): AxiosPromise<OrderBookDetails> {
-            return localVarFp.orderBookDetails(marketId, options).then((request) => request(axios, basePath));
+        orderBookDetails(marketId?: number, filter?: OrderBookDetailsFilterEnum, options?: RawAxiosRequestConfig): AxiosPromise<OrderBookDetails> {
+            return localVarFp.orderBookDetails(marketId, filter, options).then((request) => request(axios, basePath));
         },
         /**
          * Get order book orders
@@ -4456,11 +4783,12 @@ export const OrderApiFactory = function (configuration?: Configuration, basePath
          * Get order books metadata.<hr>**Response Description:**<br><br>1) **Taker and maker fees** are in percentage.<br>2) **Min base amount:** The amount of base token that can be traded in a single order.<br>3) **Min quote amount:** The amount of quote token that can be traded in a single order.<br>4) **Supported size decimals:** The number of decimal places that can be used for the size of the order.<br>5) **Supported price decimals:** The number of decimal places that can be used for the price of the order.<br>6) **Supported quote decimals:** Size Decimals + Quote Decimals.
          * @summary orderBooks
          * @param {number} [marketId] 
+         * @param {OrderBooksFilterEnum} [filter] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        orderBooks(marketId?: number, options?: RawAxiosRequestConfig): AxiosPromise<OrderBooks> {
-            return localVarFp.orderBooks(marketId, options).then((request) => request(axios, basePath));
+        orderBooks(marketId?: number, filter?: OrderBooksFilterEnum, options?: RawAxiosRequestConfig): AxiosPromise<OrderBooks> {
+            return localVarFp.orderBooks(marketId, filter, options).then((request) => request(axios, basePath));
         },
         /**
          * Get recent trades
@@ -4487,11 +4815,14 @@ export const OrderApiFactory = function (configuration?: Configuration, basePath
          * @param {string} [cursor] 
          * @param {number} [from] 
          * @param {number} [askFilter] 
+         * @param {TradesRoleEnum} [role] 
+         * @param {TradesTypeEnum} [type] 
+         * @param {boolean} [aggregate] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, options?: RawAxiosRequestConfig): AxiosPromise<Trades> {
-            return localVarFp.trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, options).then((request) => request(axios, basePath));
+        trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, role?: TradesRoleEnum, type?: TradesTypeEnum, aggregate?: boolean, options?: RawAxiosRequestConfig): AxiosPromise<Trades> {
+            return localVarFp.trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, role, type, aggregate, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -4548,6 +4879,17 @@ export class OrderApi extends BaseAPI {
     }
 
     /**
+     * Get asset details
+     * @summary assetDetails
+     * @param {number} [assetId] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public assetDetails(assetId?: number, options?: RawAxiosRequestConfig) {
+        return OrderApiFp(this.configuration).assetDetails(assetId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Get exchange stats
      * @summary exchangeStats
      * @param {*} [options] Override http request option.
@@ -4561,11 +4903,12 @@ export class OrderApi extends BaseAPI {
      * Get order books metadata
      * @summary orderBookDetails
      * @param {number} [marketId] 
+     * @param {OrderBookDetailsFilterEnum} [filter] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public orderBookDetails(marketId?: number, options?: RawAxiosRequestConfig) {
-        return OrderApiFp(this.configuration).orderBookDetails(marketId, options).then((request) => request(this.axios, this.basePath));
+    public orderBookDetails(marketId?: number, filter?: OrderBookDetailsFilterEnum, options?: RawAxiosRequestConfig) {
+        return OrderApiFp(this.configuration).orderBookDetails(marketId, filter, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4584,11 +4927,12 @@ export class OrderApi extends BaseAPI {
      * Get order books metadata.<hr>**Response Description:**<br><br>1) **Taker and maker fees** are in percentage.<br>2) **Min base amount:** The amount of base token that can be traded in a single order.<br>3) **Min quote amount:** The amount of quote token that can be traded in a single order.<br>4) **Supported size decimals:** The number of decimal places that can be used for the size of the order.<br>5) **Supported price decimals:** The number of decimal places that can be used for the price of the order.<br>6) **Supported quote decimals:** Size Decimals + Quote Decimals.
      * @summary orderBooks
      * @param {number} [marketId] 
+     * @param {OrderBooksFilterEnum} [filter] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public orderBooks(marketId?: number, options?: RawAxiosRequestConfig) {
-        return OrderApiFp(this.configuration).orderBooks(marketId, options).then((request) => request(this.axios, this.basePath));
+    public orderBooks(marketId?: number, filter?: OrderBooksFilterEnum, options?: RawAxiosRequestConfig) {
+        return OrderApiFp(this.configuration).orderBooks(marketId, filter, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -4617,11 +4961,14 @@ export class OrderApi extends BaseAPI {
      * @param {string} [cursor] 
      * @param {number} [from] 
      * @param {number} [askFilter] 
+     * @param {TradesRoleEnum} [role] 
+     * @param {TradesTypeEnum} [type] 
+     * @param {boolean} [aggregate] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, options?: RawAxiosRequestConfig) {
-        return OrderApiFp(this.configuration).trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, options).then((request) => request(this.axios, this.basePath));
+    public trades(sortBy: TradesSortByEnum, limit: number, authorization?: string, auth?: string, marketId?: number, accountIndex?: number, orderIndex?: number, sortDir?: TradesSortDirEnum, cursor?: string, from?: number, askFilter?: number, role?: TradesRoleEnum, type?: TradesTypeEnum, aggregate?: boolean, options?: RawAxiosRequestConfig) {
+        return OrderApiFp(this.configuration).trades(sortBy, limit, authorization, auth, marketId, accountIndex, orderIndex, sortDir, cursor, from, askFilter, role, type, aggregate, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -4630,6 +4977,18 @@ export const ExportTypeEnum = {
     Trade: 'trade'
 } as const;
 export type ExportTypeEnum = typeof ExportTypeEnum[keyof typeof ExportTypeEnum];
+export const OrderBookDetailsFilterEnum = {
+    All: 'all',
+    Spot: 'spot',
+    Perp: 'perp'
+} as const;
+export type OrderBookDetailsFilterEnum = typeof OrderBookDetailsFilterEnum[keyof typeof OrderBookDetailsFilterEnum];
+export const OrderBooksFilterEnum = {
+    All: 'all',
+    Spot: 'spot',
+    Perp: 'perp'
+} as const;
+export type OrderBooksFilterEnum = typeof OrderBooksFilterEnum[keyof typeof OrderBooksFilterEnum];
 export const TradesSortByEnum = {
     BlockHeight: 'block_height',
     Timestamp: 'timestamp',
@@ -4640,6 +4999,20 @@ export const TradesSortDirEnum = {
     Desc: 'desc'
 } as const;
 export type TradesSortDirEnum = typeof TradesSortDirEnum[keyof typeof TradesSortDirEnum];
+export const TradesRoleEnum = {
+    All: 'all',
+    Maker: 'maker',
+    Taker: 'taker'
+} as const;
+export type TradesRoleEnum = typeof TradesRoleEnum[keyof typeof TradesRoleEnum];
+export const TradesTypeEnum = {
+    All: 'all',
+    Trade: 'trade',
+    Liquidation: 'liquidation',
+    Deleverage: 'deleverage',
+    MarketSettlement: 'market-settlement'
+} as const;
+export type TradesTypeEnum = typeof TradesTypeEnum[keyof typeof TradesTypeEnum];
 
 
 /**
@@ -4647,6 +5020,63 @@ export type TradesSortDirEnum = typeof TradesSortDirEnum[keyof typeof TradesSort
  */
 export const ReferralApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Update kickback percentage for referral rewards
+         * @summary referral_kickback_update
+         * @param {number} accountIndex 
+         * @param {number} kickbackPercentage 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        referralKickbackUpdate: async (accountIndex: number, kickbackPercentage: number, authorization?: string, auth?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'accountIndex' is not null or undefined
+            assertParamExists('referralKickbackUpdate', 'accountIndex', accountIndex)
+            // verify required parameter 'kickbackPercentage' is not null or undefined
+            assertParamExists('referralKickbackUpdate', 'kickbackPercentage', kickbackPercentage)
+            const localVarPath = `/api/v1/referral/kickback/update`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+
+            if (auth !== undefined) { 
+                localVarFormParams.append('auth', auth as any);
+            }
+    
+            if (accountIndex !== undefined) { 
+                localVarFormParams.append('account_index', accountIndex as any);
+            }
+    
+            if (kickbackPercentage !== undefined) { 
+                localVarFormParams.append('kickback_percentage', kickbackPercentage as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            if (authorization != null) {
+                localVarHeaderParameter['authorization'] = String(authorization);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Get referral points
          * @summary referral_points
@@ -4693,6 +5123,63 @@ export const ReferralApiAxiosParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Update referral code (allowed once per account)
+         * @summary referral_update
+         * @param {number} accountIndex 
+         * @param {string} newReferralCode 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        referralUpdate: async (accountIndex: number, newReferralCode: string, authorization?: string, auth?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'accountIndex' is not null or undefined
+            assertParamExists('referralUpdate', 'accountIndex', accountIndex)
+            // verify required parameter 'newReferralCode' is not null or undefined
+            assertParamExists('referralUpdate', 'newReferralCode', newReferralCode)
+            const localVarPath = `/api/v1/referral/update`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            const localVarFormParams = new ((configuration && configuration.formDataCtor) || FormData)();
+
+
+            if (auth !== undefined) { 
+                localVarFormParams.append('auth', auth as any);
+            }
+    
+            if (accountIndex !== undefined) { 
+                localVarFormParams.append('account_index', accountIndex as any);
+            }
+    
+            if (newReferralCode !== undefined) { 
+                localVarFormParams.append('new_referral_code', newReferralCode as any);
+            }
+    
+    
+            localVarHeaderParameter['Content-Type'] = 'multipart/form-data';
+    
+            if (authorization != null) {
+                localVarHeaderParameter['authorization'] = String(authorization);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = localVarFormParams;
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -4702,6 +5189,22 @@ export const ReferralApiAxiosParamCreator = function (configuration?: Configurat
 export const ReferralApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ReferralApiAxiosParamCreator(configuration)
     return {
+        /**
+         * Update kickback percentage for referral rewards
+         * @summary referral_kickback_update
+         * @param {number} accountIndex 
+         * @param {number} kickbackPercentage 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async referralKickbackUpdate(accountIndex: number, kickbackPercentage: number, authorization?: string, auth?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RespUpdateKickback>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.referralKickbackUpdate(accountIndex, kickbackPercentage, authorization, auth, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ReferralApi.referralKickbackUpdate']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Get referral points
          * @summary referral_points
@@ -4717,6 +5220,22 @@ export const ReferralApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['ReferralApi.referralPoints']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Update referral code (allowed once per account)
+         * @summary referral_update
+         * @param {number} accountIndex 
+         * @param {string} newReferralCode 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async referralUpdate(accountIndex: number, newReferralCode: string, authorization?: string, auth?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RespUpdateReferralCode>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.referralUpdate(accountIndex, newReferralCode, authorization, auth, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ReferralApi.referralUpdate']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -4726,6 +5245,19 @@ export const ReferralApiFp = function(configuration?: Configuration) {
 export const ReferralApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = ReferralApiFp(configuration)
     return {
+        /**
+         * Update kickback percentage for referral rewards
+         * @summary referral_kickback_update
+         * @param {number} accountIndex 
+         * @param {number} kickbackPercentage 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        referralKickbackUpdate(accountIndex: number, kickbackPercentage: number, authorization?: string, auth?: string, options?: RawAxiosRequestConfig): AxiosPromise<RespUpdateKickback> {
+            return localVarFp.referralKickbackUpdate(accountIndex, kickbackPercentage, authorization, auth, options).then((request) => request(axios, basePath));
+        },
         /**
          * Get referral points
          * @summary referral_points
@@ -4738,6 +5270,19 @@ export const ReferralApiFactory = function (configuration?: Configuration, baseP
         referralPoints(accountIndex: number, authorization?: string, auth?: string, options?: RawAxiosRequestConfig): AxiosPromise<ReferralPoints> {
             return localVarFp.referralPoints(accountIndex, authorization, auth, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Update referral code (allowed once per account)
+         * @summary referral_update
+         * @param {number} accountIndex 
+         * @param {string} newReferralCode 
+         * @param {string} [authorization]  make required after integ is done
+         * @param {string} [auth]  made optional to support header auth clients
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        referralUpdate(accountIndex: number, newReferralCode: string, authorization?: string, auth?: string, options?: RawAxiosRequestConfig): AxiosPromise<RespUpdateReferralCode> {
+            return localVarFp.referralUpdate(accountIndex, newReferralCode, authorization, auth, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -4745,6 +5290,20 @@ export const ReferralApiFactory = function (configuration?: Configuration, baseP
  * ReferralApi - object-oriented interface
  */
 export class ReferralApi extends BaseAPI {
+    /**
+     * Update kickback percentage for referral rewards
+     * @summary referral_kickback_update
+     * @param {number} accountIndex 
+     * @param {number} kickbackPercentage 
+     * @param {string} [authorization]  make required after integ is done
+     * @param {string} [auth]  made optional to support header auth clients
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public referralKickbackUpdate(accountIndex: number, kickbackPercentage: number, authorization?: string, auth?: string, options?: RawAxiosRequestConfig) {
+        return ReferralApiFp(this.configuration).referralKickbackUpdate(accountIndex, kickbackPercentage, authorization, auth, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Get referral points
      * @summary referral_points
@@ -4756,6 +5315,20 @@ export class ReferralApi extends BaseAPI {
      */
     public referralPoints(accountIndex: number, authorization?: string, auth?: string, options?: RawAxiosRequestConfig) {
         return ReferralApiFp(this.configuration).referralPoints(accountIndex, authorization, auth, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Update referral code (allowed once per account)
+     * @summary referral_update
+     * @param {number} accountIndex 
+     * @param {string} newReferralCode 
+     * @param {string} [authorization]  make required after integ is done
+     * @param {string} [auth]  made optional to support header auth clients
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public referralUpdate(accountIndex: number, newReferralCode: string, authorization?: string, auth?: string, options?: RawAxiosRequestConfig) {
+        return ReferralApiFp(this.configuration).referralUpdate(accountIndex, newReferralCode, authorization, auth, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

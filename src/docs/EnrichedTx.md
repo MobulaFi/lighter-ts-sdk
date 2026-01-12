@@ -22,6 +22,7 @@ Name | Type | Description | Notes
 **executed_at** | **number** |  | [default to undefined]
 **sequence_index** | **number** |  | [default to undefined]
 **parent_hash** | **string** |  | [default to undefined]
+**api_key_index** | **number** |  | [default to undefined]
 **committed_at** | **number** |  | [default to undefined]
 **verified_at** | **number** |  | [default to undefined]
 
@@ -48,6 +49,7 @@ const instance: EnrichedTx = {
     executed_at,
     sequence_index,
     parent_hash,
+    api_key_index,
     committed_at,
     verified_at,
 };

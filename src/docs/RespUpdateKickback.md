@@ -1,4 +1,4 @@
-# RespSendTx
+# RespUpdateKickback
 
 
 ## Properties
@@ -7,21 +7,17 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **code** | **number** |  | [default to undefined]
 **message** | **string** |  | [optional] [default to undefined]
-**tx_hash** | **string** |  | [default to undefined]
-**predicted_execution_time_ms** | **number** |  | [default to undefined]
-**volume_quota_remaining** | **number** |  | [default to undefined]
+**success** | **boolean** |  | [default to undefined]
 
 ## Example
 
 ```typescript
-import { RespSendTx } from './api';
+import { RespUpdateKickback } from './api';
 
-const instance: RespSendTx = {
+const instance: RespUpdateKickback = {
     code,
     message,
-    tx_hash,
-    predicted_execution_time_ms,
-    volume_quota_remaining,
+    success,
 };
 ```
 
