@@ -235,10 +235,10 @@ const [order, tx, err] = await client.create_market_order_limited_slippage(
   apiKeyIndex
 )
 
-// Cancel order
+// Cancel order (orderIndex is bigint for large order IDs)
 const [tx, err] = await client.cancel_order(
   marketIndex,
-  orderIndex,
+  BigInt(orderIndex), // or use 123n literal syntax
   nonce,
   apiKeyIndex
 )

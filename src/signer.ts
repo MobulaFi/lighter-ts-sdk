@@ -972,7 +972,7 @@ export class SignerClient {
 
   sign_cancel_order(
     market_index: number,
-    order_index: number,
+    order_index: bigint,
     nonce: number = -1,
     api_key_index: number = -1
   ): [number | null, string | null, string | null, string | null] {
@@ -983,7 +983,7 @@ export class SignerClient {
       order_index,
       nonce,
       actualApiKeyIndex,
-      this.account_index
+      BigInt(this.account_index)
     )
 
     const decoded = decodeTxInfo(result)
@@ -1574,7 +1574,7 @@ export class SignerClient {
 
   async cancel_order(
     market_index: number,
-    order_index: number,
+    order_index: bigint,
     nonce: number = -1,
     api_key_index: number = -1
   ): Promise<[any, RespSendTx | null, string | null]> {

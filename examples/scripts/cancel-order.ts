@@ -10,14 +10,14 @@ const API_KEY_INDEX = process.env.API_KEY_INDEX
 
 /**
  * Cancel a limit or stop order
- * @param orderIndex - The order index to cancel (required)
+ * @param orderIndex - The order index to cancel (required) - bigint for large order IDs
  * @param marketId - The market ID where the order exists (required)
  */
 async function cancelOrder({
   orderIndex,
   marketId,
 }: {
-  orderIndex: number
+  orderIndex: bigint
   marketId: number
 }) {
   if (!API_KEY_PRIVATE_KEY || !API_KEY_INDEX || !ACCOUNT_INDEX) {
@@ -161,7 +161,7 @@ async function listActiveOrders(accountIndex: number, marketId: number = 255) {
   console.log(ordersData)
 }
 
-// cancelOrder({ orderIndex: 1, marketId: 1 })
+// cancelOrder({ orderIndex: 1n, marketId: 1 })
 listActiveOrders(parseInt(ACCOUNT_INDEX!), 1)
 
 export { cancelOrder, listActiveOrders }
